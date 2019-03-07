@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="e89c70fb-f55d-4005-81c9-9660290c4f95" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/Assets/My Pipeline/MyPipeline.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/My Pipeline/MyPipeline.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/My Pipeline/ShaderLibrary/Lit.hlsl" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/My Pipeline/ShaderLibrary/Lit.hlsl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scenes/Light.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/Light.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/AnnotationManager" beforeDir="false" afterPath="$PROJECT_DIR$/Library/AnnotationManager" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/CurrentLayout.dwlt" beforeDir="false" afterPath="$PROJECT_DIR$/Library/CurrentLayout.dwlt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/InspectorExpandedItems.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Library/InspectorExpandedItems.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/ScriptAssemblies/Assembly-CSharp.dll" beforeDir="false" afterPath="$PROJECT_DIR$/Library/ScriptAssemblies/Assembly-CSharp.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/ScriptAssemblies/Assembly-CSharp.dll.mdb" beforeDir="false" afterPath="$PROJECT_DIR$/Library/ScriptAssemblies/Assembly-CSharp.dll.mdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/ScriptAssemblies/Unity.PackageManagerUI.Editor.dll" beforeDir="false" afterPath="$PROJECT_DIR$/Library/ScriptAssemblies/Unity.PackageManagerUI.Editor.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/ScriptAssemblies/Unity.PackageManagerUI.Editor.dll.mdb" beforeDir="false" afterPath="$PROJECT_DIR$/Library/ScriptAssemblies/Unity.PackageManagerUI.Editor.dll.mdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/ScriptAssemblies/Unity.RenderPipelines.Core.Editor.dll" beforeDir="false" afterPath="$PROJECT_DIR$/Library/ScriptAssemblies/Unity.RenderPipelines.Core.Editor.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/ScriptAssemblies/Unity.RenderPipelines.Core.Editor.dll.mdb" beforeDir="false" afterPath="$PROJECT_DIR$/Library/ScriptAssemblies/Unity.RenderPipelines.Core.Editor.dll.mdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/ScriptAssemblies/Unity.RenderPipelines.Core.Runtime.dll" beforeDir="false" afterPath="$PROJECT_DIR$/Library/ScriptAssemblies/Unity.RenderPipelines.Core.Runtime.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/ScriptAssemblies/Unity.RenderPipelines.Core.Runtime.dll.mdb" beforeDir="false" afterPath="$PROJECT_DIR$/Library/ScriptAssemblies/Unity.RenderPipelines.Core.Runtime.dll.mdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/ScriptAssemblies/Unity.RenderPipelines.Core.ShaderLibrary.dll" beforeDir="false" afterPath="$PROJECT_DIR$/Library/ScriptAssemblies/Unity.RenderPipelines.Core.ShaderLibrary.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/ScriptAssemblies/Unity.RenderPipelines.Core.ShaderLibrary.dll.mdb" beforeDir="false" afterPath="$PROJECT_DIR$/Library/ScriptAssemblies/Unity.RenderPipelines.Core.ShaderLibrary.dll.mdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/StateCache/Hierarchy/2c5908-mainStage.json" beforeDir="false" afterPath="$PROJECT_DIR$/Library/StateCache/Hierarchy/2c5908-mainStage.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/StateCache/SceneView/0bf800-mainStage.json" beforeDir="false" afterPath="$PROJECT_DIR$/Library/StateCache/SceneView/0bf800-mainStage.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/assetDatabase3" beforeDir="false" afterPath="$PROJECT_DIR$/Library/assetDatabase3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/metadata/20/20c95698e64aa4124971e5096d96a2a3" beforeDir="false" afterPath="$PROJECT_DIR$/Library/metadata/20/20c95698e64aa4124971e5096d96a2a3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/metadata/54/546725ac3fa8c4fe992b09a7fb293d38" beforeDir="false" afterPath="$PROJECT_DIR$/Library/metadata/54/546725ac3fa8c4fe992b09a7fb293d38" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/metadata/a6/a69c350c88d574a9288be039ca2fcbaf" beforeDir="false" afterPath="$PROJECT_DIR$/Library/metadata/a6/a69c350c88d574a9288be039ca2fcbaf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/metadata/a6/a69c350c88d574a9288be039ca2fcbaf.info" beforeDir="false" afterPath="$PROJECT_DIR$/Library/metadata/a6/a69c350c88d574a9288be039ca2fcbaf.info" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/metadata/af/af722a07d3c034d45a2b6a86e89ccaed" beforeDir="false" afterPath="$PROJECT_DIR$/Library/metadata/af/af722a07d3c034d45a2b6a86e89ccaed" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/metadata/af/af722a07d3c034d45a2b6a86e89ccaed.info" beforeDir="false" afterPath="$PROJECT_DIR$/Library/metadata/af/af722a07d3c034d45a2b6a86e89ccaed.info" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/metadata/f2/f20c33ef08b004d8f824cf9c727648c9" beforeDir="false" afterPath="$PROJECT_DIR$/Library/metadata/f2/f20c33ef08b004d8f824cf9c727648c9" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/metadata/f2/f20c33ef08b004d8f824cf9c727648c9.info" beforeDir="false" afterPath="$PROJECT_DIR$/Library/metadata/f2/f20c33ef08b004d8f824cf9c727648c9.info" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/metadata/f7/f76e2dd224a51465db2ebdade4314346" beforeDir="false" afterPath="$PROJECT_DIR$/Library/metadata/f7/f76e2dd224a51465db2ebdade4314346" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/metadata/fd/fd2843fffbec74d249028b898f12ec2d" beforeDir="false" afterPath="$PROJECT_DIR$/Library/metadata/fd/fd2843fffbec74d249028b898f12ec2d" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Library/shadercompiler-UnityShaderCompiler0.log" beforeDir="false" afterPath="$PROJECT_DIR$/Library/shadercompiler-UnityShaderCompiler0.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/obj/Debug/Assembly-CSharp.csprojAssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/obj/Debug/Assembly-CSharp.csprojAssemblyReference.cache" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FUSProjectUsageTrigger">
+    <session id="-2116173935">
+      <usages-collector id="statistics.lifecycle.project">
+        <counts>
+          <entry key="project.closed" value="1" />
+          <entry key="project.open.time.7" value="1" />
+          <entry key="project.opened" value="1" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.open">
+        <counts>
+          <entry key="cs" value="1" />
+          <entry key="hlsl" value="2" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.open">
+        <counts>
+          <entry key="C#" value="1" />
+          <entry key="Cg" value="2" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.extensions.edit">
+        <counts>
+          <entry key="cs" value="320" />
+          <entry key="hlsl" value="119" />
+        </counts>
+      </usages-collector>
+      <usages-collector id="statistics.file.types.edit">
+        <counts>
+          <entry key="C#" value="320" />
+          <entry key="Cg" value="119" />
+        </counts>
+      </usages-collector>
+    </session>
+  </component>
+  <component name="FileEditorManager">
+    <leaf>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/Assets/My Pipeline/MyPipeline.cs">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="134">
+              <caret line="78" column="63" lean-forward="true" selection-start-line="78" selection-start-column="63" selection-end-line="78" selection-end-column="63" />
+              <folding>
+                <marker date="1551960730629" expanded="false" signature="6:150" ph="..." />
+                <marker date="1551960730629" expanded="true" signature="192:7720" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="1258:1503" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="1357:1421" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="1440:1500" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="1599:1628" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="1718:1838" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="1796:1835" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="1902:4546" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="2025:2041" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="2109:2180" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="2619:2646" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="2704:2798" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="3517:3545" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="3618:3712" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="3902:3953" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="4548:4588" ph="/// 配置光参数 ... " />
+                <marker date="1551960730629" expanded="true" signature="4613:6454" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="4673:6070" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="4705:4726" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="4947:5128" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="5169:6020" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="5179:5217" ph="/* 光源================= ... */" />
+                <marker date="1551960730629" expanded="true" signature="5487:6015" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="6171:6451" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="6244:6407" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="6282:6402" ph="/* Debug.Log(lightIndices.Length+&quot;+&quot;+i+&quot;+&quot;+cull.visibleLights.Count+&quot;&quot;); ... */" />
+                <marker date="1551960730629" expanded="true" signature="6597:7718" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="6599:6866" ph="/* var drawSettings = new DrawRendererSettings( ... */" />
+                <marker date="1551960730629" expanded="true" signature="6899:7066" ph="{...}" />
+                <marker date="1551960730629" expanded="true" signature="7013:7061" ph="{...}" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Assets/My Pipeline/ShaderLibrary/Lit.hlsl">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="225">
+              <caret line="15" column="29" selection-start-line="15" selection-start-column="29" selection-end-line="15" selection-end-column="29" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Assets/My Pipeline/Shaders/Lit.shader">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="360">
+              <caret line="24" column="1" selection-start-line="24" selection-start-column="1" selection-end-line="24" selection-end-column="1" />
+              <folding>
+                <marker date="1551954889669" expanded="true" signature="25:385" ph="{...}" />
+                <marker date="1551954889669" expanded="true" signature="41:86" ph="{...}" />
+                <marker date="1551954889669" expanded="true" signature="100:383" ph="{...}" />
+                <marker date="1551954889669" expanded="true" signature="112:380" ph="{...}" />
+                <marker date="1551954889669" expanded="true" signature="128:369" ph="{...}" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>unity_LightIndicesOffsetAndCount</find>
+    </findStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/Assets/My Pipeline/ShaderLibrary/Unlit.hlsl" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Assets/My Pipeline/MyPipeline.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Assets/My Pipeline/ShaderLibrary/Lit.hlsl" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Assets/My Pipeline/Shaders/Lit.shader" root0="FORCE_HIGHLIGHTING" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/Assets/My Pipeline/ShaderLibrary/Lit.hlsl" />
+        <option value="$PROJECT_DIR$/Assets/My Pipeline/MyPipeline.cs" />
+      </list>
+    </option>
+  </component>
+  <component name="JsBuildToolGruntFileManager" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsBuildToolPackageJson" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsGulpfileManager">
+    <detection-done>true</detection-done>
+    <sorting>DEFINITION_ORDER</sorting>
+  </component>
+  <component name="ProjectFrameBounds" extendedState="6">
+    <option name="x" value="16" />
+    <option name="y" value="23" />
+    <option name="width" value="1440" />
+    <option name="height" value="806" />
+  </component>
+  <component name="ProjectView">
+    <navigator currentView="UnityExplorer" proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="UnityExplorer">
+        <subPane>
+          <expand>
+            <path>
+              <item name="Project" type="e068e287:UnityExplorerRootNode" />
+              <item name="Assets" type="48f920db:UnityExplorerNode$AssetsRoot" />
+            </path>
+            <path>
+              <item name="Project" type="e068e287:UnityExplorerRootNode" />
+              <item name="Assets" type="48f920db:UnityExplorerNode$AssetsRoot" />
+              <item name="My Pipeline" type="1045f7f1:UnityExplorerNode" />
+            </path>
+            <path>
+              <item name="Project" type="e068e287:UnityExplorerRootNode" />
+              <item name="Assets" type="48f920db:UnityExplorerNode$AssetsRoot" />
+              <item name="My Pipeline" type="1045f7f1:UnityExplorerNode" />
+              <item name="ShaderLibrary" type="1045f7f1:UnityExplorerNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+        <option name="show-hidden-items" value="false" />
+      </pane>
+      <pane id="FileSystemExplorer" />
+      <pane id="SolutionExplorer">
+        <option name="show-all-files" value="false" />
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="Rider.DefaultBreakpoints.AreToggled" value="true" />
+    <property name="Rider.ProjectViewActivator.IsNotFirstRun" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="Attach to Unity Editor.Attach to Unity Editor">
+    <configuration name="Attach to Unity Editor &amp; Play" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="UNITY_ATTACH_AND_PLAY" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost">
+      <option name="listenPortForConnections" value="false" />
+      <option name="pid" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost">
+      <option name="listenPortForConnections" value="false" />
+      <option name="pid" />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Attach to Unity Editor.Attach to Unity Editor" />
+      <item itemvalue="Attach to Unity Editor.Attach to Unity Editor &amp; Play" />
+    </list>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="e89c70fb-f55d-4005-81c9-9660290c4f95" name="Default Changelist" comment="" />
+      <created>1551955485157</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1551955485157</updated>
+      <workItem from="1551955488000" duration="4496000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="4496000" />
+  </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="0" y="23" width="1440" height="806" extended-state="6" />
+    <editor active="true" />
+    <layout>
+      <window_info id="Favorites" side_tool="true" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.1595136" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info anchor="bottom" id="NuGet" />
+      <window_info anchor="bottom" id="Docker" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Database Changes" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Version Control" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Unit Tests" />
+      <window_info anchor="bottom" id="Terminal" />
+      <window_info anchor="bottom" id="Event Log" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="right" id="Errors In Solution" />
+      <window_info anchor="right" id="Database" />
+      <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+    </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="UnityProjectConfiguration" hasMinimizedUI="true" />
+  <component name="UnityUnitTestConfiguration" currentTestLauncher="NUnit" />
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <breakpoint enabled="true" suspend="NONE" type="DotNet Exception Breakpoints">
+          <properties exception="System.Threading.ThreadAbortException" displayValue="System.Threading.ThreadAbortException" />
+          <option name="timeStamp" value="1" />
+        </breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/Assets/My Pipeline/Shaders/Lit.shader">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="360">
+          <caret line="24" column="1" selection-start-line="24" selection-start-column="1" selection-end-line="24" selection-end-column="1" />
+          <folding>
+            <marker date="1551954889669" expanded="true" signature="25:385" ph="{...}" />
+            <marker date="1551954889669" expanded="true" signature="41:86" ph="{...}" />
+            <marker date="1551954889669" expanded="true" signature="100:383" ph="{...}" />
+            <marker date="1551954889669" expanded="true" signature="112:380" ph="{...}" />
+            <marker date="1551954889669" expanded="true" signature="128:369" ph="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Assets/My Pipeline/ShaderLibrary/Unlit.hlsl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="381">
+          <caret line="26" column="34" lean-forward="true" selection-start-line="26" selection-start-column="34" selection-end-line="26" selection-end-column="34" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Assets/My Pipeline/ShaderLibrary/Lit.hlsl">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="225">
+          <caret line="15" column="29" selection-start-line="15" selection-start-column="29" selection-end-line="15" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Assets/My Pipeline/MyPipeline.cs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="134">
+          <caret line="78" column="63" lean-forward="true" selection-start-line="78" selection-start-column="63" selection-end-line="78" selection-end-column="63" />
+          <folding>
+            <marker date="1551960730629" expanded="false" signature="6:150" ph="..." />
+            <marker date="1551960730629" expanded="true" signature="192:7720" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="1258:1503" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="1357:1421" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="1440:1500" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="1599:1628" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="1718:1838" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="1796:1835" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="1902:4546" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="2025:2041" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="2109:2180" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="2619:2646" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="2704:2798" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="3517:3545" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="3618:3712" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="3902:3953" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="4548:4588" ph="/// 配置光参数 ... " />
+            <marker date="1551960730629" expanded="true" signature="4613:6454" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="4673:6070" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="4705:4726" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="4947:5128" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="5169:6020" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="5179:5217" ph="/* 光源================= ... */" />
+            <marker date="1551960730629" expanded="true" signature="5487:6015" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="6171:6451" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="6244:6407" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="6282:6402" ph="/* Debug.Log(lightIndices.Length+&quot;+&quot;+i+&quot;+&quot;+cull.visibleLights.Count+&quot;&quot;); ... */" />
+            <marker date="1551960730629" expanded="true" signature="6597:7718" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="6599:6866" ph="/* var drawSettings = new DrawRendererSettings( ... */" />
+            <marker date="1551960730629" expanded="true" signature="6899:7066" ph="{...}" />
+            <marker date="1551960730629" expanded="true" signature="7013:7061" ph="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>

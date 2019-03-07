@@ -6,11 +6,12 @@ using Conditional = System.Diagnostics.ConditionalAttribute;
 public class MyPipeline : RenderPipeline
 {
 	//传递光参数======================================================
-	private const int maxVisibleLights = 4;
+	private const int maxVisibleLights = 16;
 	private static int visibleLightColorsId = Shader.PropertyToID("_VisibleLightColors");//所有光颜色
 	private static int visibleLightDirectionsOrPositionsId = Shader.PropertyToID("_VisibleLightDirectionsOrPositions");//直射光
 	static int visibleLightAttenuationsId = Shader.PropertyToID("_VisibleLightAttenuations");//点光源
 	static int visibleLightSpotDirectionsId = Shader.PropertyToID("_VisibleLightSpotDirections");//聚光灯
+	static int lightIndicesOffsetAndCountID = Shader.PropertyToID("unity_LightIndicesOffsetAndCount");
 	Vector4[] visibleLightColors = new Vector4[maxVisibleLights];
 	Vector4[] visibleLightDirectionsOrPositions = new Vector4[maxVisibleLights];
 	Vector4[] visibleLightAttenuations = new Vector4[maxVisibleLights];
@@ -75,6 +76,12 @@ public class MyPipeline : RenderPipeline
 		if (cull.visibleLights.Count > 0) {
 			ConfigureLights();
 		}
+		else //这里是告诉lightIndicesOffsetAndCountID.y为0 这样子是0灯光的时候
+		{
+			cameraBuffer.SetGlobalVector(
+				lightIndicesOffsetAndCountID, Vector4.zero
+			);
+		}
 		
 		//cameraBuffer.ClearRenderTarget(true, false, Color.clear);
 		cameraBuffer.BeginSample("Render Camera");
@@ -91,9 +98,12 @@ public class MyPipeline : RenderPipeline
 			camera, new ShaderPassName("SRPDefaultUnlit")
 		)
 		{
-			flags = drawFlags,
-			rendererConfiguration = RendererConfiguration.PerObjectLightIndices8//设置光源索引。
+			flags = drawFlags, 
 		};
+		if (cull.visibleLights.Count > 0)//设置光源索引。light数量=0时 设置Unity会奔溃的     
+		{
+			drawSettings.rendererConfiguration = RendererConfiguration.PerObjectLightIndices8;
+		}           
 		//drawSettings.flags = drawFlags;//设置动态批处理和GPUinstance
 		drawSettings.sorting.flags = SortFlags.CommonOpaque;//设置渲染顺序
 
@@ -127,8 +137,8 @@ public class MyPipeline : RenderPipeline
 	/// </summary>
 	void ConfigureLights ()
 	{
-		int i = 0;
-		for (; i < cull.visibleLights.Count; i++) 
+		
+		for (int i = 0; i < cull.visibleLights.Count; i++) 
 		{
 			if (i==maxVisibleLights)
 			{
@@ -173,11 +183,20 @@ public class MyPipeline : RenderPipeline
 					attenuation.w = -outerCos * attenuation.z;
 				}
 			}
-
 			visibleLightAttenuations[i] = attenuation;
 		}
-		for (; i < maxVisibleLights; i++) {
-			visibleLightColors[i] = Color.clear;
+
+		
+		int[] lightIndices = cull.GetLightIndexMap();
+		if (cull.visibleLights.Count>maxVisibleLights)
+		{
+			for (int i = maxVisibleLights; i < cull.visibleLights.Count; i++)
+			{  
+				lightIndices[i] = -1;
+				//Debug.Log(lightIndices.Length+"+"+i+"+"+cull.visibleLights.Count+"");
+				//假设这里有30盏灯这里数值则为30+16～29+30把多余的灯光全部清空为-1而跳过
+			}
+			cull.SetLightIndexMap(lightIndices);
 		}
 	}
 	
