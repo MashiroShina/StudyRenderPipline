@@ -21,7 +21,8 @@ CBUFFER_START(_LightBuffer)
 	float4 _VisibleLightSpotDirections[MAX_VISIBLE_LIGHTS];
 CBUFFER_END
 
-float3 DiffuseLight (int index, float3 normal, float3 worldPos) {
+
+float3 DiffuseLight (int index, float3 normal, float3 worldPos, float shadowAttenuation) {
 	float3 lightColor = _VisibleLightColors[index].rgb;
 	float4 lightPositionOrDirection = _VisibleLightDirectionsOrPositions[index];
 	float4 lightAttenuation = _VisibleLightAttenuations[index];
@@ -31,7 +32,7 @@ float3 DiffuseLight (int index, float3 normal, float3 worldPos) {
 	//这里的worldpos是 当前物体的，这样子刚好得到点光源对当前物体的向量
 	float3 lightDirection = normalize(lightVector);
 	float diffuse = saturate(dot(normal, lightDirection));
-	//设置光照范围(点光源)+设置光照衰减====
+	//设置光照范围(点光源)+设置光照衰减========================================================
 	//(1-(d^2/r^2)^2)^2)
 	float rangeFade = dot(lightVector, lightVector) * lightAttenuation.x;//点光源范围
 	rangeFade = saturate(1.0 - rangeFade * rangeFade);
@@ -42,12 +43,33 @@ float3 DiffuseLight (int index, float3 normal, float3 worldPos) {
 	spotFade *= spotFade;
 	
 	float distanceSqr = max(dot(lightVector, lightVector), 0.00001);
-	diffuse *= spotFade * rangeFade / distanceSqr;
-	//=================================
+	diffuse *= shadowAttenuation * spotFade * rangeFade / distanceSqr;
+	//======================================================================================
 
 	return diffuse * lightColor;
 }
-//=========================================================================================
+//===========================================================================================
+
+//_ShadowBuffer && Sampling Depth============================================================
+CBUFFER_START(_ShadowBuffer)
+	float4x4 _WorldToShadowMatrix;
+CBUFFER_END
+
+TEXTURE2D_SHADOW(_ShadowMap);
+SAMPLER_CMP(sampler_ShadowMap);
+
+float ShadowAttenuation (float3 worldPos) {
+    //世界位置转为阴影空间位置。
+	float4 shadowPos = mul(_WorldToShadowMatrix, float4(worldPos, 1.0));
+	shadowPos.xyz /= shadowPos.w;// NDC
+	//与位置坐标（position）的Z值比较来进行深度测试。如果该点位置的z值比在阴影贴图中对应点的值要小就会返回1，这说明他比任何投射阴影的物体离光源都要近。
+	//反之，在阴影投射物后面就会返回0。
+	return SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, shadowPos.xyz);
+}
+
+//==========================================================================================
+
+
 
 //instance必要的宏===========================================================================
 #define UNITY_MATRIX_M unity_ObjectToWorld
@@ -81,10 +103,10 @@ VertexOutput LitPassVertex (VertexInput input) {
 	output.normal = mul((float3x3)UNITY_MATRIX_M, input.normal);
 	output.worldPos = worldPos.xyz;
 	
-	output.vertexLighting = 0;//顶点光照
+	output.vertexLighting = 0;//顶点光照 四个之后影响的光源当不重要的处理 
 	for (int i = 4; i < min(unity_LightIndicesOffsetAndCount.y, 8); i++) {
 		int lightIndex = unity_4LightIndices1[i - 4];
-		output.vertexLighting += DiffuseLight(lightIndex, output.normal, output.worldPos);
+		output.vertexLighting += DiffuseLight(lightIndex, output.normal, output.worldPos,1);//顶点光源不会有阴影，所以在LitPassVertex.中将阴影衰减设为1
 	}
 	
 	return output;
@@ -104,7 +126,8 @@ float4 LitPassFragment (VertexOutput input) : SV_TARGET {
 	diffuseLight = input.vertexLighting;
 	for (int i = 0; i < min(unity_LightIndicesOffsetAndCount.y,4); i++) {
 		int lightIndex = unity_4LightIndices0[i];
-		diffuseLight += DiffuseLight(lightIndex, input.normal, input.worldPos);
+		float shadowAttenuation = ShadowAttenuation(input.worldPos);
+		diffuseLight += DiffuseLight(lightIndex, input.normal, input.worldPos, shadowAttenuation);
 	}
 	//for (int i = 4; i < min(unity_LightIndicesOffsetAndCount.y, 8); i++) {
 	//	int lightIndex = unity_4LightIndices1[i - 4];

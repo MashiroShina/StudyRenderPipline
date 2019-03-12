@@ -5,6 +5,10 @@ using Conditional = System.Diagnostics.ConditionalAttribute;
 
 public class MyPipeline : RenderPipeline
 {
+	RenderTexture shadowMap;
+	CullResults cull;
+	Material errorMaterial;
+	
 	//传递光参数======================================================
 	private const int maxVisibleLights = 16;
 	private static int visibleLightColorsId = Shader.PropertyToID("_VisibleLightColors");//所有光颜色
@@ -16,6 +20,11 @@ public class MyPipeline : RenderPipeline
 	Vector4[] visibleLightDirectionsOrPositions = new Vector4[maxVisibleLights];
 	Vector4[] visibleLightAttenuations = new Vector4[maxVisibleLights];
 	Vector4[] visibleLightSpotDirections = new Vector4[maxVisibleLights];
+	//===============================================================
+	
+	//传递阴影参数=====================================================
+	static int shadowMapId = Shader.PropertyToID("_ShadowMap");
+	static int worldToShadowMatrixId = Shader.PropertyToID("_WorldToShadowMatrix");
 	//===============================================================
 	
 	DrawRendererFlags drawFlags;//设置渲染处理方式
@@ -33,12 +42,11 @@ public class MyPipeline : RenderPipeline
 		}
 	}
 
-	CullResults cull;
-
-	Material errorMaterial;
-
 	CommandBuffer cameraBuffer = new CommandBuffer {
 		name = "Render Camera"
+	};
+	CommandBuffer shadowBuffer = new CommandBuffer {
+		name = "Render Shadows"
 	};
 
 	public override void Render (ScriptableRenderContext renderContext, Camera[] cameras) 
@@ -64,6 +72,8 @@ public class MyPipeline : RenderPipeline
 
 		CullResults.Cull(ref cullingParameters, context, ref cull);//ref cull来减少new cull
 
+		RenderShadows(context);
+		
 		context.SetupCameraProperties(camera);//相当于mvp Setup camera specific global shader variables.
 
 		CameraClearFlags clearFlags = camera.clearFlags;
@@ -131,7 +141,71 @@ public class MyPipeline : RenderPipeline
 		cameraBuffer.Clear();
 
 		context.Submit();
+		if (shadowMap)
+		{
+			RenderTexture.ReleaseTemporary(shadowMap);
+			shadowMap = null;
+		}
 	}
+	
+	void RenderShadows (ScriptableRenderContext context) {
+		shadowMap = RenderTexture.GetTemporary(
+			512, 512, 16, RenderTextureFormat.Shadowmap
+		);
+		shadowMap.filterMode = FilterMode.Bilinear;
+		shadowMap.wrapMode = TextureWrapMode.Clamp;
+		
+		
+		CoreUtils.SetRenderTarget(
+			shadowBuffer, shadowMap,
+			RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store,
+			ClearFlag.Depth
+		);
+		
+		
+		shadowBuffer.BeginSample("Render Shadows");
+		context.ExecuteCommandBuffer(shadowBuffer);
+		shadowBuffer.Clear();
+		
+		//绘制RenderTexture,配置视角投影矩阵==========================================
+		Matrix4x4 viewMatrix, projectionMatrix;
+		ShadowSplitData splitData;
+		cull.ComputeSpotShadowMatricesAndCullingPrimitives(//调用阴影命令缓冲区的SetViewProjectionMatrices 方法，然后执行命令并清理该缓存区。
+			0, out viewMatrix, out projectionMatrix, out splitData
+		);
+		shadowBuffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
+		context.ExecuteCommandBuffer(shadowBuffer);
+		shadowBuffer.Clear();
+		
+		var shadowSettings = new DrawShadowsSettings(cull, 0);
+		context.DrawShadows(ref shadowSettings);
+		//=========================================================================
+		
+		//得到世界位置转为阴影空间位置的矩阵。得到view-projection-texture===============================================
+		if (SystemInfo.usesReversedZBuffer) {
+			projectionMatrix.m20 = -projectionMatrix.m20;
+			projectionMatrix.m21 = -projectionMatrix.m21;
+			projectionMatrix.m22 = -projectionMatrix.m22;
+			projectionMatrix.m23 = -projectionMatrix.m23;
+		}
+		//要映射至该范围就得就得再额外乘一个能在所有维度缩放和偏移 0.5个单位的转换矩阵。我们可以用Matrix4x4.TRS方法来得到想要的缩放、旋转或偏移。
+		var scaleOffset = Matrix4x4.identity;
+		scaleOffset.m00 = scaleOffset.m11 = scaleOffset.m22 = 0.5f;
+		scaleOffset.m03 = scaleOffset.m13 = scaleOffset.m23 = 0.5f;
+		//得到 光源的视点-投影-纹理view-projection-texture （到texture空间的变化）（-1，1）-> (0,1)
+		Matrix4x4 worldToShadowMatrix = (scaleOffset) * (projectionMatrix * viewMatrix);//这个矩阵通过将渲染阴影是用的的视角矩阵和投影矩阵相乘得到。用SetGlobalMatrix将它传给GPU
+		//传递转换矩阵和shadowMap
+		shadowBuffer.SetGlobalMatrix(worldToShadowMatrixId, worldToShadowMatrix);
+		shadowBuffer.SetGlobalTexture(shadowMapId, shadowMap);
+		//=========================================================================
+		
+		shadowBuffer.EndSample("Render Shadows");
+		context.ExecuteCommandBuffer(shadowBuffer);
+		shadowBuffer.Clear();
+		
+	}
+	
+	
 	/// <summary>
 	/// 配置光参数
 	/// </summary>
