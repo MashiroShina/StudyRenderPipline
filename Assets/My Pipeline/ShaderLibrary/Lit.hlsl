@@ -2,6 +2,7 @@
 #define MYRP_LIT_INCLUDED
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Shadow/ShadowSamplingTent.hlsl"
 CBUFFER_START(UnityPerFrame)
 	float4x4 unity_MatrixVP;
 CBUFFER_END
@@ -53,6 +54,8 @@ float3 DiffuseLight (int index, float3 normal, float3 worldPos, float shadowAtte
 //_ShadowBuffer && Sampling Depth============================================================
 CBUFFER_START(_ShadowBuffer)
 	float4x4 _WorldToShadowMatrix;
+	float _ShadowStrength;
+	float4 _ShadowMapSize;
 CBUFFER_END
 
 TEXTURE2D_SHADOW(_ShadowMap);
@@ -62,9 +65,26 @@ float ShadowAttenuation (float3 worldPos) {
     //世界位置转为阴影空间位置。
 	float4 shadowPos = mul(_WorldToShadowMatrix, float4(worldPos, 1.0));
 	shadowPos.xyz /= shadowPos.w;// NDC
+	
 	//与位置坐标（position）的Z值比较来进行深度测试。如果该点位置的z值比在阴影贴图中对应点的值要小就会返回1，这说明他比任何投射阴影的物体离光源都要近。
-	//反之，在阴影投射物后面就会返回0。
-	return SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, shadowPos.xyz);
+	//反之，在阴影投射物后面就会返回0。              它需要一张贴图，一个采样器状态，以及对应的阴影空间位置作为参数。
+	float attenuation = SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, shadowPos.xyz);
+	
+    #if defined(_SHADOWS_SOFT)
+		real tentWeights[9];
+		real2 tentUVs[9];
+		SampleShadow_ComputeSamples_Tent_5x5(
+			_ShadowMapSize, shadowPos.xy, tentWeights, tentUVs
+		);
+		attenuation = 0;
+		for (int i = 0; i < 9; i++) {
+			attenuation += tentWeights[i] * SAMPLE_TEXTURE2D_SHADOW(
+				_ShadowMap, sampler_ShadowMap, float3(tentUVs[i].xy, shadowPos.z)
+			);
+		}
+	#endif
+	
+	return lerp(1, attenuation, _ShadowStrength);
 }
 
 //==========================================================================================

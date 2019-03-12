@@ -5,9 +5,12 @@ using Conditional = System.Diagnostics.ConditionalAttribute;
 
 public class MyPipeline : RenderPipeline
 {
-	RenderTexture shadowMap;
+	
 	CullResults cull;
 	Material errorMaterial;
+	
+	
+	
 	
 	//传递光参数======================================================
 	private const int maxVisibleLights = 16;
@@ -23,12 +26,20 @@ public class MyPipeline : RenderPipeline
 	//===============================================================
 	
 	//传递阴影参数=====================================================
+	RenderTexture shadowMap;
+	int shadowMapSize;
 	static int shadowMapId = Shader.PropertyToID("_ShadowMap");
 	static int worldToShadowMatrixId = Shader.PropertyToID("_WorldToShadowMatrix");
+	static int shadowBiasId = Shader.PropertyToID("_ShadowBias");
+	static int shadowStrengthId = Shader.PropertyToID("_ShadowStrength");
+	static int shadowMapSizeId = Shader.PropertyToID("_ShadowMapSize");//soft shadow
+	
+	const string shadowsSoftKeyword = "_SHADOWS_SOFT";
+	Vector4[] shadowData = new Vector4[maxVisibleLights];
 	//===============================================================
 	
 	DrawRendererFlags drawFlags;//设置渲染处理方式
-	public MyPipeline(bool dynamicBatching,bool instancing)
+	public MyPipeline(bool dynamicBatching,bool instancing,int shadowMapSize)
 	{
 		GraphicsSettings.lightsUseLinearIntensity = true;//gamma 才有的光强度到 liner
 		if (dynamicBatching)
@@ -40,6 +51,7 @@ public class MyPipeline : RenderPipeline
 		{
 			drawFlags |= DrawRendererFlags.EnableInstancing;
 		}
+		this.shadowMapSize = shadowMapSize;
 	}
 
 	CommandBuffer cameraBuffer = new CommandBuffer {
@@ -72,8 +84,18 @@ public class MyPipeline : RenderPipeline
 
 		CullResults.Cull(ref cullingParameters, context, ref cull);//ref cull来减少new cull
 
-		RenderShadows(context);
-		
+		if (cull.visibleLights.Count > 0)
+		{
+			ConfigureLights();
+			RenderShadows(context);
+		}else 
+		{
+			cameraBuffer.SetGlobalVector(
+				lightIndicesOffsetAndCountID, Vector4.zero
+			);
+		}
+		ConfigureLights();
+
 		context.SetupCameraProperties(camera);//相当于mvp Setup camera specific global shader variables.
 
 		CameraClearFlags clearFlags = camera.clearFlags;
@@ -83,15 +105,15 @@ public class MyPipeline : RenderPipeline
 			camera.backgroundColor
 		);
 		
-		if (cull.visibleLights.Count > 0) {
-			ConfigureLights();
-		}
-		else //这里是告诉lightIndicesOffsetAndCountID.y为0 这样子是0灯光的时候
-		{
-			cameraBuffer.SetGlobalVector(
-				lightIndicesOffsetAndCountID, Vector4.zero
-			);
-		}
+//		if (cull.visibleLights.Count > 0) {
+//			ConfigureLights();
+//		}
+//		else //这里是告诉lightIndicesOffsetAndCountID.y为0 这样子是0灯光的时候
+//		{
+//			cameraBuffer.SetGlobalVector(
+//				lightIndicesOffsetAndCountID, Vector4.zero
+//			);
+//		}
 		
 		//cameraBuffer.ClearRenderTarget(true, false, Color.clear);
 		cameraBuffer.BeginSample("Render Camera");
@@ -150,7 +172,7 @@ public class MyPipeline : RenderPipeline
 	
 	void RenderShadows (ScriptableRenderContext context) {
 		shadowMap = RenderTexture.GetTemporary(
-			512, 512, 16, RenderTextureFormat.Shadowmap
+			shadowMapSize, shadowMapSize, 16, RenderTextureFormat.Shadowmap
 		);
 		shadowMap.filterMode = FilterMode.Bilinear;
 		shadowMap.wrapMode = TextureWrapMode.Clamp;
@@ -166,38 +188,71 @@ public class MyPipeline : RenderPipeline
 		shadowBuffer.BeginSample("Render Shadows");
 		context.ExecuteCommandBuffer(shadowBuffer);
 		shadowBuffer.Clear();
-		
-		//绘制RenderTexture,配置视角投影矩阵==========================================
-		Matrix4x4 viewMatrix, projectionMatrix;
-		ShadowSplitData splitData;
-		cull.ComputeSpotShadowMatricesAndCullingPrimitives(//调用阴影命令缓冲区的SetViewProjectionMatrices 方法，然后执行命令并清理该缓存区。
-			0, out viewMatrix, out projectionMatrix, out splitData
-		);
-		shadowBuffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
-		context.ExecuteCommandBuffer(shadowBuffer);
-		shadowBuffer.Clear();
-		
-		var shadowSettings = new DrawShadowsSettings(cull, 0);
-		context.DrawShadows(ref shadowSettings);
-		//=========================================================================
-		
-		//得到世界位置转为阴影空间位置的矩阵。得到view-projection-texture===============================================
-		if (SystemInfo.usesReversedZBuffer) {
-			projectionMatrix.m20 = -projectionMatrix.m20;
-			projectionMatrix.m21 = -projectionMatrix.m21;
-			projectionMatrix.m22 = -projectionMatrix.m22;
-			projectionMatrix.m23 = -projectionMatrix.m23;
+
+		for (int i = 0; i < cull.visibleLights.Count; i++)
+		{
+			if (i == maxVisibleLights)
+			{
+				break;
+			}
+
+			//绘制RenderTexture,配置视角投影矩阵==========================================
+			Matrix4x4 viewMatrix, projectionMatrix;
+			ShadowSplitData splitData;
+			cull.ComputeSpotShadowMatricesAndCullingPrimitives( //调用阴影命令缓冲区的SetViewProjectionMatrices 方法，然后执行命令并清理该缓存区。
+				i, out viewMatrix, out projectionMatrix, out splitData
+			);
+			shadowBuffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
+			//设置深度偏移让阴影平顺点============================================
+			shadowBuffer.SetGlobalFloat(
+				shadowBiasId, cull.visibleLights[0].light.shadowBias
+			);
+			//设置阴影强度//把阴影强度传递给shader
+			shadowBuffer.SetGlobalFloat(
+				shadowStrengthId, cull.visibleLights[0].light.shadowStrength
+			);
+			//=================================================================
+
+			context.ExecuteCommandBuffer(shadowBuffer);
+			shadowBuffer.Clear();
+
+			var shadowSettings = new DrawShadowsSettings(cull, 0);
+			context.DrawShadows(ref shadowSettings);
+			//=========================================================================
+
+			//得到世界位置转为阴影空间位置的矩阵。得到view-projection-texture===============================================
+			if (SystemInfo.usesReversedZBuffer)
+			{
+				projectionMatrix.m20 = -projectionMatrix.m20;
+				projectionMatrix.m21 = -projectionMatrix.m21;
+				projectionMatrix.m22 = -projectionMatrix.m22;
+				projectionMatrix.m23 = -projectionMatrix.m23;
+			}
+
+			//要映射至该范围就得就得再额外乘一个能在所有维度缩放和偏移 0.5个单位的转换矩阵。我们可以用Matrix4x4.TRS方法来得到想要的缩放、旋转或偏移。
+			var scaleOffset = Matrix4x4.identity;
+			scaleOffset.m00 = scaleOffset.m11 = scaleOffset.m22 = 0.5f;
+			scaleOffset.m03 = scaleOffset.m13 = scaleOffset.m23 = 0.5f;
+			//得到 光源的视点-投影-纹理view-projection-texture （到texture空间的变化）（-1，1）-> (0,1)
+			Matrix4x4 worldToShadowMatrix =
+				(scaleOffset) * (projectionMatrix * viewMatrix); //这个矩阵通过将渲染阴影是用的的视角矩阵和投影矩阵相乘得到。用SetGlobalMatrix将它传给GPU
+			//传递转换矩阵和shadowMap
+			shadowBuffer.SetGlobalMatrix(worldToShadowMatrixId, worldToShadowMatrix);
 		}
-		//要映射至该范围就得就得再额外乘一个能在所有维度缩放和偏移 0.5个单位的转换矩阵。我们可以用Matrix4x4.TRS方法来得到想要的缩放、旋转或偏移。
-		var scaleOffset = Matrix4x4.identity;
-		scaleOffset.m00 = scaleOffset.m11 = scaleOffset.m22 = 0.5f;
-		scaleOffset.m03 = scaleOffset.m13 = scaleOffset.m23 = 0.5f;
-		//得到 光源的视点-投影-纹理view-projection-texture （到texture空间的变化）（-1，1）-> (0,1)
-		Matrix4x4 worldToShadowMatrix = (scaleOffset) * (projectionMatrix * viewMatrix);//这个矩阵通过将渲染阴影是用的的视角矩阵和投影矩阵相乘得到。用SetGlobalMatrix将它传给GPU
-		//传递转换矩阵和shadowMap
-		shadowBuffer.SetGlobalMatrix(worldToShadowMatrixId, worldToShadowMatrix);
+
 		shadowBuffer.SetGlobalTexture(shadowMapId, shadowMap);
+		float invShadowMapSize = 1f / shadowMapSize;
+		shadowBuffer.SetGlobalVector(
+			shadowMapSizeId, new Vector4(
+				invShadowMapSize, invShadowMapSize, shadowMapSize, shadowMapSize
+			)
+		);
 		//=========================================================================
+		
+		CoreUtils.SetKeyword(
+			shadowBuffer, shadowsSoftKeyword,
+			cull.visibleLights[0].light.shadows == LightShadows.Soft
+		);
 		
 		shadowBuffer.EndSample("Render Shadows");
 		context.ExecuteCommandBuffer(shadowBuffer);
@@ -223,6 +278,8 @@ public class MyPipeline : RenderPipeline
 			visibleLightColors[i] = light.finalColor;//颜色*强度 显示颜色
 			Vector4 attenuation = Vector4.zero;
 			attenuation.w = 1f;
+			
+			Vector4 shadow = Vector4.zero;//设置阴影
 			
 			if (light.lightType==LightType.Directional)
 			{
@@ -255,9 +312,19 @@ public class MyPipeline : RenderPipeline
 					float angleRange = Mathf.Max(innerCos - outerCos, 0.001f);
 					attenuation.z = 1f / angleRange;
 					attenuation.w = -outerCos * attenuation.z;
+					
+					Light shadowLight = light.light;
+					Bounds shadowBounds;
+					if (shadowLight.shadows != LightShadows.None && cull.GetShadowCasterBounds(i, out shadowBounds))
+					{
+						shadow.x = shadowLight.shadowStrength;
+						shadow.y = shadowLight.shadows == LightShadows.Soft ? 1f : 0f;//1表示软阴影，0表示硬阴影。
+					}
 				}
 			}
+			
 			visibleLightAttenuations[i] = attenuation;
+			shadowData[i] = shadow;
 		}
 
 		
