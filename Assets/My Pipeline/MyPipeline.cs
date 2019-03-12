@@ -12,7 +12,7 @@ public class MyPipeline : RenderPipeline
 	
 	
 	
-	//传递光参数======================================================
+	//传递光参数===========================================================================================================
 	private const int maxVisibleLights = 16;
 	private static int visibleLightColorsId = Shader.PropertyToID("_VisibleLightColors");//所有光颜色
 	private static int visibleLightDirectionsOrPositionsId = Shader.PropertyToID("_VisibleLightDirectionsOrPositions");//直射光
@@ -23,20 +23,23 @@ public class MyPipeline : RenderPipeline
 	Vector4[] visibleLightDirectionsOrPositions = new Vector4[maxVisibleLights];
 	Vector4[] visibleLightAttenuations = new Vector4[maxVisibleLights];
 	Vector4[] visibleLightSpotDirections = new Vector4[maxVisibleLights];
-	//===============================================================
+	//====================================================================================================================
 	
-	//传递阴影参数=====================================================
+	//传递阴影参数==========================================================================================================
 	RenderTexture shadowMap;
 	int shadowMapSize;
 	static int shadowMapId = Shader.PropertyToID("_ShadowMap");
-	static int worldToShadowMatrixId = Shader.PropertyToID("_WorldToShadowMatrix");
+	//static int worldToShadowMatrixId = Shader.PropertyToID("_WorldToShadowMatrix");
+	static int worldToShadowMatricesId = Shader.PropertyToID("_WorldToShadowMatrices");
 	static int shadowBiasId = Shader.PropertyToID("_ShadowBias");
-	static int shadowStrengthId = Shader.PropertyToID("_ShadowStrength");
+	//static int shadowStrengthId = Shader.PropertyToID("_ShadowStrength");
+	static int shadowDataId = Shader.PropertyToID("_ShadowData");
 	static int shadowMapSizeId = Shader.PropertyToID("_ShadowMapSize");//soft shadow
 	
 	const string shadowsSoftKeyword = "_SHADOWS_SOFT";
 	Vector4[] shadowData = new Vector4[maxVisibleLights];
-	//===============================================================
+	Matrix4x4[] worldToShadowMatrices = new Matrix4x4[maxVisibleLights];
+	//====================================================================================================================
 	
 	DrawRendererFlags drawFlags;//设置渲染处理方式
 	public MyPipeline(bool dynamicBatching,bool instancing,int shadowMapSize)
@@ -171,6 +174,9 @@ public class MyPipeline : RenderPipeline
 	}
 	
 	void RenderShadows (ScriptableRenderContext context) {
+		float tileSize = shadowMapSize / 4;
+		Rect tileViewport = new Rect(0f, 0f, tileSize, tileSize);
+		
 		shadowMap = RenderTexture.GetTemporary(
 			shadowMapSize, shadowMapSize, 16, RenderTextureFormat.Shadowmap
 		);
@@ -195,30 +201,53 @@ public class MyPipeline : RenderPipeline
 			{
 				break;
 			}
+			//跳过不需要阴影贴图的光源
+			if (shadowData[i].x <= 0f)
+			{
+				continue;
+			}
 
-			//绘制RenderTexture,配置视角投影矩阵==========================================
+			//绘制RenderTexture,配置视角投影矩阵========================================================================
 			Matrix4x4 viewMatrix, projectionMatrix;
 			ShadowSplitData splitData;
-			cull.ComputeSpotShadowMatricesAndCullingPrimitives( //调用阴影命令缓冲区的SetViewProjectionMatrices 方法，然后执行命令并清理该缓存区。
-				i, out viewMatrix, out projectionMatrix, out splitData
-			);
+			//ComputeSpotShadowMatricesAndCullingPrimitives方法返回是否可以生成有效的矩阵的布尔值。
+			if (!cull.ComputeSpotShadowMatricesAndCullingPrimitives(i, out viewMatrix, out projectionMatrix, out splitData))
+			{
+				shadowData[i].x = 0f;
+				continue;
+			} //这里i是光照序列一开始我们只有一个光是0现在多个灯光则为i
+			
+			float tileOffsetX = i % 4;
+			float tileOffsetY = i / 4;//0123
+			tileViewport.x = tileOffsetX * tileSize;
+			tileViewport.y = tileOffsetY * tileSize;
+			//在我们设置视口和投影矩阵前，用SetViewport通知GPU使用合适的视口大小。
+			shadowBuffer.SetViewport(tileViewport);
+			shadowBuffer.EnableScissorRect(new Rect(
+				tileViewport.x + 4f, tileViewport.y + 4f,
+				tileSize - 8f, tileSize - 8f
+			));
+			shadowBuffer.DisableScissorRect();
+			//调用阴影命令缓冲区的SetViewProjectionMatrices 方法，然后执行命令并清理该缓存区。
 			shadowBuffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
-			//设置深度偏移让阴影平顺点============================================
+			//设置深度偏移让阴影平顺点====================================================================================
 			shadowBuffer.SetGlobalFloat(
 				shadowBiasId, cull.visibleLights[0].light.shadowBias
 			);
+			
 			//设置阴影强度//把阴影强度传递给shader
-			shadowBuffer.SetGlobalFloat(
-				shadowStrengthId, cull.visibleLights[0].light.shadowStrength
-			);
-			//=================================================================
+//			shadowBuffer.SetGlobalFloat(
+//				shadowStrengthId, cull.visibleLights[0].light.shadowStrength
+//			);
+			shadowBuffer.SetGlobalVectorArray(shadowDataId, shadowData);
+			//=========================================================================================================
 
 			context.ExecuteCommandBuffer(shadowBuffer);
 			shadowBuffer.Clear();
 
 			var shadowSettings = new DrawShadowsSettings(cull, 0);
 			context.DrawShadows(ref shadowSettings);
-			//=========================================================================
+			//========================================================================================================
 
 			//得到世界位置转为阴影空间位置的矩阵。得到view-projection-texture===============================================
 			if (SystemInfo.usesReversedZBuffer)
@@ -233,21 +262,32 @@ public class MyPipeline : RenderPipeline
 			var scaleOffset = Matrix4x4.identity;
 			scaleOffset.m00 = scaleOffset.m11 = scaleOffset.m22 = 0.5f;
 			scaleOffset.m03 = scaleOffset.m13 = scaleOffset.m23 = 0.5f;
-			//得到 光源的视点-投影-纹理view-projection-texture （到texture空间的变化）（-1，1）-> (0,1)
-			Matrix4x4 worldToShadowMatrix =
-				(scaleOffset) * (projectionMatrix * viewMatrix); //这个矩阵通过将渲染阴影是用的的视角矩阵和投影矩阵相乘得到。用SetGlobalMatrix将它传给GPU
+			
+			//得到 光源的视点-投影-纹理view-projection-texture （到texture空间的变化）（-1，1）-> (0,1),每个光源对应一个变换矩阵
+			worldToShadowMatrices[i] =
+				scaleOffset * (projectionMatrix * viewMatrix); //这个矩阵通过将渲染阴影是用的的视角矩阵和投影矩阵相乘得到。用SetGlobalMatrix将它传给GPU
 			//传递转换矩阵和shadowMap
-			shadowBuffer.SetGlobalMatrix(worldToShadowMatrixId, worldToShadowMatrix);
+			//shadowBuffer.SetGlobalMatrix(worldToShadowMatrixId, worldToShadowMatrix);
+			
+			var tileMatrix = Matrix4x4.identity;
+			tileMatrix.m00 = tileMatrix.m11 = 0.25f;//旋转
+			tileMatrix.m03 = tileOffsetX * 0.25f;   //位移
+			tileMatrix.m13 = tileOffsetY * 0.25f;
+			worldToShadowMatrices[i] = tileMatrix * worldToShadowMatrices[i];
 		}
 
 		shadowBuffer.SetGlobalTexture(shadowMapId, shadowMap);
+		shadowBuffer.SetGlobalMatrixArray(
+			worldToShadowMatricesId, worldToShadowMatrices
+		);
+		
 		float invShadowMapSize = 1f / shadowMapSize;
 		shadowBuffer.SetGlobalVector(
 			shadowMapSizeId, new Vector4(
 				invShadowMapSize, invShadowMapSize, shadowMapSize, shadowMapSize
 			)
 		);
-		//=========================================================================
+		//============================================================================================================
 		
 		CoreUtils.SetKeyword(
 			shadowBuffer, shadowsSoftKeyword,
@@ -314,9 +354,10 @@ public class MyPipeline : RenderPipeline
 					attenuation.w = -outerCos * attenuation.z;
 					
 					Light shadowLight = light.light;
-					Bounds shadowBounds;
+					Bounds shadowBounds;//检查该光源的阴影体积是否在一个有效的范围内i是光照索引
 					if (shadowLight.shadows != LightShadows.None && cull.GetShadowCasterBounds(i, out shadowBounds))
 					{
+						//在聚光灯的情况下获取Light脚本。如果shadows属性没有被设置为LightShadows.None,就将阴影强度存储在向量的x分量中。
 						shadow.x = shadowLight.shadowStrength;
 						shadow.y = shadowLight.shadows == LightShadows.Soft ? 1f : 0f;//1表示软阴影，0表示硬阴影。
 					}
