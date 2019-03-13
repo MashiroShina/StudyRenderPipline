@@ -63,7 +63,36 @@ CBUFFER_END
 TEXTURE2D_SHADOW(_ShadowMap);
 SAMPLER_CMP(sampler_ShadowMap);
 
+float HardShadowAttenuation (float4 shadowPos) {
+	//与位置坐标（position）的Z值比较来进行深度测试。如果该点位置的z值比在阴影贴图中对应点的值要小就会返回1，这说明他比任何投射阴影的物体离光源都要近。
+	//反之，在阴影投射物后面就会返回0。              它需要一张贴图，一个采样器状态，以及对应的阴影空间位置作为参数。
+	float attenuation;
+return  attenuation = SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, shadowPos.xyz);
+}
+
+float SoftShadowAttenuation (float4 shadowPos) {
+    //#if defined(_SHADOWS_SOFT)
+		real tentWeights[9];
+		real2 tentUVs[9];
+		SampleShadow_ComputeSamples_Tent_5x5(
+			_ShadowMapSize, shadowPos.xy, tentWeights, tentUVs
+		);
+	    float attenuation = 0;
+		for (int i = 0; i < 9; i++) {
+			attenuation += tentWeights[i] * SAMPLE_TEXTURE2D_SHADOW(
+				_ShadowMap, sampler_ShadowMap, float3(tentUVs[i].xy, shadowPos.z)
+			);
+		}
+	//#endif	
+	return attenuation;
+}
+
 float ShadowAttenuation (int index, float3 worldPos) {
+
+    #if !defined(_SHADOWS_HARD) && !defined(_SHADOWS_SOFT)
+		return 1.0;
+	#endif
+    
     if (_ShadowData[index].x <= 0) //x存阴影强度>0表示有
     {
 		return 1.0;
@@ -73,28 +102,25 @@ float ShadowAttenuation (int index, float3 worldPos) {
 	shadowPos.xyz /= shadowPos.w;// NDC
 	float attenuation;
 	
+	#if defined(_SHADOWS_HARD)
+	#if defined(_SHADOWS_SOFT)
+	
 	if(_ShadowData[index].y == 0)//0表示硬阴影
 	{
-	//与位置坐标（position）的Z值比较来进行深度测试。如果该点位置的z值比在阴影贴图中对应点的值要小就会返回1，这说明他比任何投射阴影的物体离光源都要近。
-	//反之，在阴影投射物后面就会返回0。              它需要一张贴图，一个采样器状态，以及对应的阴影空间位置作为参数。
-	 attenuation = SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, shadowPos.xyz);
+	     attenuation = HardShadowAttenuation(shadowPos);
 	}
 	else
 	{
-    //#if defined(_SHADOWS_SOFT)
-		real tentWeights[9];
-		real2 tentUVs[9];
-		SampleShadow_ComputeSamples_Tent_5x5(
-			_ShadowMapSize, shadowPos.xy, tentWeights, tentUVs
-		);
-		attenuation = 0;
-		for (int i = 0; i < 9; i++) {
-			attenuation += tentWeights[i] * SAMPLE_TEXTURE2D_SHADOW(
-				_ShadowMap, sampler_ShadowMap, float3(tentUVs[i].xy, shadowPos.z)
-			);
-		}
-	//#endif	
+         attenuation = SoftShadowAttenuation(shadowPos);
 	}
+	
+	#else
+			attenuation = HardShadowAttenuation(shadowPos);
+	#endif
+	#else
+		    attenuation = SoftShadowAttenuation(shadowPos);
+	#endif
+	
 	return lerp(1, attenuation, _ShadowData[index].x);
 }
 

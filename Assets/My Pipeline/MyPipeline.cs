@@ -28,6 +28,7 @@ public class MyPipeline : RenderPipeline
 	//传递阴影参数==========================================================================================================
 	RenderTexture shadowMap;
 	int shadowMapSize;
+	int shadowTileCount;//需要多少个平铺块
 	static int shadowMapId = Shader.PropertyToID("_ShadowMap");
 	//static int worldToShadowMatrixId = Shader.PropertyToID("_WorldToShadowMatrix");
 	static int worldToShadowMatricesId = Shader.PropertyToID("_WorldToShadowMatrices");
@@ -37,6 +38,7 @@ public class MyPipeline : RenderPipeline
 	static int shadowMapSizeId = Shader.PropertyToID("_ShadowMapSize");//soft shadow
 	
 	const string shadowsSoftKeyword = "_SHADOWS_SOFT";
+	const string shadowsHardKeyword = "_SHADOWS_HARD";
 	Vector4[] shadowData = new Vector4[maxVisibleLights];
 	Matrix4x4[] worldToShadowMatrices = new Matrix4x4[maxVisibleLights];
 	//====================================================================================================================
@@ -90,12 +92,21 @@ public class MyPipeline : RenderPipeline
 		if (cull.visibleLights.Count > 0)
 		{
 			ConfigureLights();
-			RenderShadows(context);
+			if (shadowTileCount>0)
+			{
+				RenderShadows(context);
+			}else {
+				cameraBuffer.DisableShaderKeyword(shadowsHardKeyword);
+				cameraBuffer.DisableShaderKeyword(shadowsSoftKeyword);
+			}
+			
 		}else 
 		{
 			cameraBuffer.SetGlobalVector(
 				lightIndicesOffsetAndCountID, Vector4.zero
 			);
+			cameraBuffer.DisableShaderKeyword(shadowsHardKeyword);
+			cameraBuffer.DisableShaderKeyword(shadowsSoftKeyword);
 		}
 		ConfigureLights();
 
@@ -174,7 +185,23 @@ public class MyPipeline : RenderPipeline
 	}
 	
 	void RenderShadows (ScriptableRenderContext context) {
-		float tileSize = shadowMapSize / 4;
+		
+		int split;
+		if (shadowTileCount <= 1) {
+			split = 1;
+		}
+		else if (shadowTileCount <= 4) {
+			split = 2;
+		}
+		else if (shadowTileCount <= 9) {
+			split = 3;
+		}
+		else {
+			split = 4;
+		}
+		
+		float tileSize = shadowMapSize / split;
+		float tileScale = 1f / split;
 		Rect tileViewport = new Rect(0f, 0f, tileSize, tileSize);
 		
 		shadowMap = RenderTexture.GetTemporary(
@@ -195,6 +222,9 @@ public class MyPipeline : RenderPipeline
 		context.ExecuteCommandBuffer(shadowBuffer);
 		shadowBuffer.Clear();
 
+		int tileIndex = 0;
+		bool hardShadows = false;
+		bool softShadows = false;
 		for (int i = 0; i < cull.visibleLights.Count; i++)
 		{
 			if (i == maxVisibleLights)
@@ -217,17 +247,21 @@ public class MyPipeline : RenderPipeline
 				continue;
 			} //这里i是光照序列一开始我们只有一个光是0现在多个灯光则为i
 			
-			float tileOffsetX = i % 4;
-			float tileOffsetY = i / 4;//0123
+			float tileOffsetX = tileIndex % split;
+			float tileOffsetY = tileIndex / split;//0123
 			tileViewport.x = tileOffsetX * tileSize;
 			tileViewport.y = tileOffsetY * tileSize;
-			//在我们设置视口和投影矩阵前，用SetViewport通知GPU使用合适的视口大小。
-			shadowBuffer.SetViewport(tileViewport);
-			shadowBuffer.EnableScissorRect(new Rect(
-				tileViewport.x + 4f, tileViewport.y + 4f,
-				tileSize - 8f, tileSize - 8f
-			));
-			shadowBuffer.DisableScissorRect();
+
+			if (split>1)
+			{
+				//在我们设置视口和投影矩阵前，用SetViewport通知GPU使用合适的视口大小。
+				shadowBuffer.SetViewport(tileViewport);
+				shadowBuffer.EnableScissorRect(new Rect(
+					tileViewport.x + 4f, tileViewport.y + 4f,
+					tileSize - 8f, tileSize - 8f
+				));
+			}
+			
 			//调用阴影命令缓冲区的SetViewProjectionMatrices 方法，然后执行命令并清理该缓存区。
 			shadowBuffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
 			//设置深度偏移让阴影平顺点====================================================================================
@@ -264,18 +298,36 @@ public class MyPipeline : RenderPipeline
 			scaleOffset.m03 = scaleOffset.m13 = scaleOffset.m23 = 0.5f;
 			
 			//得到 光源的视点-投影-纹理view-projection-texture （到texture空间的变化）（-1，1）-> (0,1),每个光源对应一个变换矩阵
+			//裁减空间范围是-1到1，但我们的纹理坐标和深度范围在0到1。要映射至该范围就得就得再额外乘一个能在所有维度缩放和偏移 0.5个单位的转换矩阵
 			worldToShadowMatrices[i] =
 				scaleOffset * (projectionMatrix * viewMatrix); //这个矩阵通过将渲染阴影是用的的视角矩阵和投影矩阵相乘得到。用SetGlobalMatrix将它传给GPU
 			//传递转换矩阵和shadowMap
 			//shadowBuffer.SetGlobalMatrix(worldToShadowMatrixId, worldToShadowMatrix);
-			
-			var tileMatrix = Matrix4x4.identity;
-			tileMatrix.m00 = tileMatrix.m11 = 0.25f;//旋转
-			tileMatrix.m03 = tileOffsetX * 0.25f;   //位移
-			tileMatrix.m13 = tileOffsetY * 0.25f;
-			worldToShadowMatrices[i] = tileMatrix * worldToShadowMatrices[i];
+
+			if (split > 1)
+			{
+				//设置每个剪切后图片的大小这里用了个缩放矩阵
+				var tileMatrix = Matrix4x4.identity;
+				tileMatrix.m00 = tileMatrix.m11 = tileScale; //旋转
+				tileMatrix.m03 = tileOffsetX * tileScale; //位移
+				tileMatrix.m13 = tileOffsetY * tileScale;
+				worldToShadowMatrices[i] = tileMatrix * worldToShadowMatrices[i];
+			}
+
+			tileIndex += 1;
+			if (shadowData[i].y <= 0f) {
+				hardShadows = true;
+			}
+			else {
+				softShadows = true;
+			}
 		}
 
+		if (split>1)
+		{
+			shadowBuffer.DisableScissorRect();
+		}
+		
 		shadowBuffer.SetGlobalTexture(shadowMapId, shadowMap);
 		shadowBuffer.SetGlobalMatrixArray(
 			worldToShadowMatricesId, worldToShadowMatrices
@@ -288,11 +340,8 @@ public class MyPipeline : RenderPipeline
 			)
 		);
 		//============================================================================================================
-		
-		CoreUtils.SetKeyword(
-			shadowBuffer, shadowsSoftKeyword,
-			cull.visibleLights[0].light.shadows == LightShadows.Soft
-		);
+		CoreUtils.SetKeyword(shadowBuffer, shadowsHardKeyword, hardShadows);
+		CoreUtils.SetKeyword(shadowBuffer, shadowsSoftKeyword, softShadows);
 		
 		shadowBuffer.EndSample("Render Shadows");
 		context.ExecuteCommandBuffer(shadowBuffer);
@@ -306,7 +355,7 @@ public class MyPipeline : RenderPipeline
 	/// </summary>
 	void ConfigureLights ()
 	{
-		
+		shadowTileCount = 0;
 		for (int i = 0; i < cull.visibleLights.Count; i++) 
 		{
 			if (i==maxVisibleLights)
@@ -357,6 +406,7 @@ public class MyPipeline : RenderPipeline
 					Bounds shadowBounds;//检查该光源的阴影体积是否在一个有效的范围内i是光照索引
 					if (shadowLight.shadows != LightShadows.None && cull.GetShadowCasterBounds(i, out shadowBounds))
 					{
+						shadowTileCount += 1;
 						//在聚光灯的情况下获取Light脚本。如果shadows属性没有被设置为LightShadows.None,就将阴影强度存储在向量的x分量中。
 						shadow.x = shadowLight.shadowStrength;
 						shadow.y = shadowLight.shadows == LightShadows.Soft ? 1f : 0f;//1表示软阴影，0表示硬阴影。
