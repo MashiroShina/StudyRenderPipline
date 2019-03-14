@@ -51,6 +51,10 @@ float3 DiffuseLight (int index, float3 normal, float3 worldPos, float shadowAtte
 }
 //===========================================================================================
 
+CBUFFER_START(UnityPerCamera)
+	float3 _WorldSpaceCameraPos;
+CBUFFER_END
+
 //_ShadowBuffer && Sampling Depth============================================================
 CBUFFER_START(_ShadowBuffer)
 	float4x4 _WorldToShadowMatrices[MAX_VISIBLE_LIGHTS];
@@ -61,6 +65,11 @@ CBUFFER_END
 
 TEXTURE2D_SHADOW(_ShadowMap);
 SAMPLER_CMP(sampler_ShadowMap);
+
+float DistanceToCameraSqr (float3 worldPos) {
+	float3 cameraToFragment = worldPos - _WorldSpaceCameraPos;
+	return dot(cameraToFragment, cameraToFragment);
+}
 
 float HardShadowAttenuation (float4 shadowPos) {
 	//与位置坐标（position）的Z值比较来进行深度测试。如果该点位置的z值比在阴影贴图中对应点的值要小就会返回1，这说明他比任何投射阴影的物体离光源都要近。
@@ -93,7 +102,7 @@ float ShadowAttenuation (int index, float3 worldPos) {
 		return 1.0;
 	#endif
     
-    if (_ShadowData[index].x <= 0) //x存阴影强度>0表示有
+    if (_ShadowData[index].x <= 0 || DistanceToCameraSqr(worldPos) > _GlobalShadowData.y) //x存阴影强度>0表示有
     {
 		return 1.0;
 	}

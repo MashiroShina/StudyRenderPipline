@@ -216,7 +216,7 @@ public class MyPipeline : RenderPipeline
 
 		shadowBuffer.BeginSample("Render Shadows");
 		shadowBuffer.SetGlobalVector(
-			globalShadowDataId, new Vector4(tileScale, 0f)
+			globalShadowDataId, new Vector4(tileScale, shadowDistance*shadowDistance)
 		);
 		context.ExecuteCommandBuffer(shadowBuffer);
 		shadowBuffer.Clear();
@@ -267,15 +267,14 @@ public class MyPipeline : RenderPipeline
 			//tileScale = 1f / split;
 			shadowData[i].z = tileOffsetX * tileScale;//此时z已经判断过直射光了覆盖即可 
 			shadowData[i].w = tileOffsetY * tileScale;
-			if (split>1)
-			{
-				//在我们设置视口和投影矩阵前，用SetViewport通知GPU使用合适的视口大小。
-				shadowBuffer.SetViewport(tileViewport);
-				shadowBuffer.EnableScissorRect(new Rect(
-					tileViewport.x + 4f, tileViewport.y + 4f,
-					tileSize - 8f, tileSize - 8f
-				));
-			}
+		
+			//在我们设置视口和投影矩阵前，用SetViewport通知GPU使用合适的视口大小。
+			shadowBuffer.SetViewport(tileViewport);
+			shadowBuffer.EnableScissorRect(new Rect(
+				tileViewport.x + 4f, tileViewport.y + 4f,
+				tileSize - 8f, tileSize - 8f
+			));
+			
 			
 			//调用阴影命令缓冲区的SetViewProjectionMatrices 方法，然后执行命令并清理该缓存区。
 			shadowBuffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);
@@ -327,10 +326,9 @@ public class MyPipeline : RenderPipeline
 			}
 		}
 
-		if (split>1)
-		{
-			shadowBuffer.DisableScissorRect();
-		}
+
+		shadowBuffer.DisableScissorRect();
+		
 		////传递转换矩阵和shadowMap
 		shadowBuffer.SetGlobalTexture(shadowMapId, shadowMap);
 		shadowBuffer.SetGlobalMatrixArray(
