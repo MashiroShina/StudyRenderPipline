@@ -101,6 +101,8 @@ float ShadowAttenuation (int index, float3 worldPos) {
 	float4 shadowPos = mul(_WorldToShadowMatrices[index], float4(worldPos, 1.0));
 	shadowPos.xyz /= shadowPos.w;// NDC
 	shadowPos.xy = saturate(shadowPos.xy);
+	//* _GlobalShadowData.x 是让大图块变成小图块
+	//+ _ShadowData[index].zw是移动小图块
 	shadowPos.xy = shadowPos.xy * _GlobalShadowData.x + _ShadowData[index].zw;//z=tileOffsetX * tileScale;&&w=tileOffsetY * tileScale;
 	float attenuation;
 	
