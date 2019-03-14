@@ -16,7 +16,8 @@ public class MyPipelineAsset : RenderPipelineAsset
 	[SerializeField]  ShadowMapSize shadowMapSize = ShadowMapSize._1024;
 	[SerializeField]  bool dynamicBatching;
 	[SerializeField]  bool instancing;
+	[SerializeField]  float shadowDistance = 100f;
 	protected override IRenderPipeline InternalCreatePipeline () {
-		return new MyPipeline(dynamicBatching,instancing,(int)shadowMapSize);
+		return new MyPipeline(dynamicBatching,instancing,(int)shadowMapSize,shadowDistance);
 	}
 }

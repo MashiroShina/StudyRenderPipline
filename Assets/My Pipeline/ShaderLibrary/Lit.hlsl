@@ -74,9 +74,10 @@ float SoftShadowAttenuation (float4 shadowPos) {
     //#if defined(_SHADOWS_SOFT)
 		real tentWeights[9];
 		real2 tentUVs[9];
+		
 		SampleShadow_ComputeSamples_Tent_5x5(
 			_ShadowMapSize, shadowPos.xy, tentWeights, tentUVs
-		);
+		);		
 	    float attenuation = 0;
 		for (int i = 0; i < 9; i++) {
 			attenuation += tentWeights[i] * SAMPLE_TEXTURE2D_SHADOW(
