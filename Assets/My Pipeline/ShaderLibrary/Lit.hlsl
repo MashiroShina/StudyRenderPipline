@@ -53,11 +53,10 @@ float3 DiffuseLight (int index, float3 normal, float3 worldPos, float shadowAtte
 
 //_ShadowBuffer && Sampling Depth============================================================
 CBUFFER_START(_ShadowBuffer)
-	//float4x4 _WorldToShadowMatrix;
-	//float _ShadowStrength;
 	float4x4 _WorldToShadowMatrices[MAX_VISIBLE_LIGHTS];
-	float4 _ShadowData[MAX_VISIBLE_LIGHTS];
+	float4 _ShadowData[MAX_VISIBLE_LIGHTS];//x存阴影强度>0表示有. y=0表示硬阴影. zw存放xy的偏移 ,在前面c#中z存是否为直射光然后被偏移覆盖
 	float4 _ShadowMapSize;
+	float4 _GlobalShadowData;
 CBUFFER_END
 
 TEXTURE2D_SHADOW(_ShadowMap);
@@ -101,6 +100,8 @@ float ShadowAttenuation (int index, float3 worldPos) {
     //世界位置转为阴影空间位置。
 	float4 shadowPos = mul(_WorldToShadowMatrices[index], float4(worldPos, 1.0));
 	shadowPos.xyz /= shadowPos.w;// NDC
+	shadowPos.xy = saturate(shadowPos.xy);
+	shadowPos.xy = shadowPos.xy * _GlobalShadowData.x + _ShadowData[index].zw;//z=tileOffsetX * tileScale;&&w=tileOffsetY * tileScale;
 	float attenuation;
 	
 	#if defined(_SHADOWS_HARD)

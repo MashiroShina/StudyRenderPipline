@@ -221,7 +221,7 @@ public class MyPipeline : RenderPipeline
 		context.ExecuteCommandBuffer(shadowBuffer);
 		shadowBuffer.Clear();
 
-		int tileIndex = 0;
+		int tileIndex = 0;//等于有阴影的光的数量
 		bool hardShadows = false;
 		bool softShadows = false;
 		for (int i = 0; i < cull.visibleLights.Count; i++)
@@ -261,9 +261,11 @@ public class MyPipeline : RenderPipeline
 			
 			float tileOffsetX = tileIndex % split;
 			float tileOffsetY = tileIndex / split;//0123
-			tileViewport.x = tileOffsetX * tileSize;
+			tileViewport.x = tileOffsetX * tileSize;//设置位置
 			tileViewport.y = tileOffsetY * tileSize;
-			shadowData[i].z = tileOffsetX * tileScale;//此时z已经判断过直射光了）覆盖即可
+			//tileSize = shadowMapSize / split;
+			//tileScale = 1f / split;
+			shadowData[i].z = tileOffsetX * tileScale;//此时z已经判断过直射光了覆盖即可 
 			shadowData[i].w = tileOffsetY * tileScale;
 			if (split>1)
 			{
@@ -302,24 +304,20 @@ public class MyPipeline : RenderPipeline
 			var scaleOffset = Matrix4x4.identity;
 			scaleOffset.m00 = scaleOffset.m11 = scaleOffset.m22 = 0.5f;
 			scaleOffset.m03 = scaleOffset.m13 = scaleOffset.m23 = 0.5f;
-			
 			//得到 光源的视点-投影-纹理view-projection-texture （到texture空间的变化）（-1，1）-> (0,1),每个光源对应一个变换矩阵
 			//裁减空间范围是-1到1，但我们的纹理坐标和深度范围在0到1。要映射至该范围就得就得再额外乘一个能在所有维度缩放和偏移 0.5个单位的转换矩阵
 			worldToShadowMatrices[i] =
 				scaleOffset * (projectionMatrix * viewMatrix); //这个矩阵通过将渲染阴影是用的的视角矩阵和投影矩阵相乘得到。用SetGlobalMatrix将它传给GPU
-			//传递转换矩阵和shadowMap
-			//shadowBuffer.SetGlobalMatrix(worldToShadowMatrixId, worldToShadowMatrix);
-
-			if (split > 1)
-			{
-				//设置每个剪切后图片的大小这里用了个缩放矩阵
-				var tileMatrix = Matrix4x4.identity;
-				tileMatrix.m00 = tileMatrix.m11 = tileScale; //旋转
-				tileMatrix.m03 = tileOffsetX * tileScale; //位移
-				tileMatrix.m13 = tileOffsetY * tileScale;
-				worldToShadowMatrices[i] = tileMatrix * worldToShadowMatrices[i];
-			}
-
+			
+//			if (split > 1)
+//			{
+//				//设置每个剪切后图片的大小这里用了个缩放矩阵
+//				var tileMatrix = Matrix4x4.identity;
+//				tileMatrix.m00 = tileMatrix.m11 = tileScale; //旋转
+//				tileMatrix.m03 = tileOffsetX * tileScale; //位移
+//				tileMatrix.m13 = tileOffsetY * tileScale;
+//				worldToShadowMatrices[i] = tileMatrix * worldToShadowMatrices[i];
+//			}
 			tileIndex += 1;
 			if (shadowData[i].y <= 0f) {
 				hardShadows = true;
@@ -333,7 +331,7 @@ public class MyPipeline : RenderPipeline
 		{
 			shadowBuffer.DisableScissorRect();
 		}
-		
+		////传递转换矩阵和shadowMap
 		shadowBuffer.SetGlobalTexture(shadowMapId, shadowMap);
 		shadowBuffer.SetGlobalMatrixArray(
 			worldToShadowMatricesId, worldToShadowMatrices
