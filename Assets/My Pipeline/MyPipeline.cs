@@ -20,14 +20,20 @@ public class MyPipeline : RenderPipeline
 	Vector4[] visibleLightDirectionsOrPositions = new Vector4[maxVisibleLights];
 	Vector4[] visibleLightAttenuations = new Vector4[maxVisibleLights];
 	Vector4[] visibleLightSpotDirections = new Vector4[maxVisibleLights];
+	
+	bool mainLightExists;
 	//====================================================================================================================
 	
 	//传递阴影参数==========================================================================================================
-	RenderTexture shadowMap;
+	RenderTexture shadowMap, cascadedShadowMap;
 	int shadowMapSize;
 	int shadowTileCount;//需要多少个平铺块
 	float shadowDistance;//直射光阴影需要
 	
+	int shadowCascades;
+	Vector3 shadowCascadeSplit;
+	
+	static int cascadedShadowMapId = Shader.PropertyToID("_CascadedShadowMap");
 	static int shadowMapId = Shader.PropertyToID("_ShadowMap");
 	//static int worldToShadowMatrixId = Shader.PropertyToID("_WorldToShadowMatrix");
 	static int worldToShadowMatricesId = Shader.PropertyToID("_WorldToShadowMatrices");
@@ -44,7 +50,7 @@ public class MyPipeline : RenderPipeline
 	//====================================================================================================================
 	
 	DrawRendererFlags drawFlags;//设置渲染处理方式
-	public MyPipeline(bool dynamicBatching,bool instancing,int shadowMapSize, float shadowDistance)
+	public MyPipeline(bool dynamicBatching,bool instancing,int shadowMapSize, float shadowDistance, int shadowCascades, Vector3 shadowCascadeSplit)
 	{
 		GraphicsSettings.lightsUseLinearIntensity = true;//gamma 才有的光强度到 liner
 		if (dynamicBatching)
@@ -58,6 +64,9 @@ public class MyPipeline : RenderPipeline
 		}
 		this.shadowMapSize = shadowMapSize;
 		this.shadowDistance = shadowDistance;
+		
+		this.shadowCascades = shadowCascades;
+		this.shadowCascadeSplit = shadowCascadeSplit;
 	}
 
 	CommandBuffer cameraBuffer = new CommandBuffer {
@@ -174,15 +183,19 @@ public class MyPipeline : RenderPipeline
 		cameraBuffer.Clear();
 
 		context.Submit();
+		
 		if (shadowMap)
 		{
 			RenderTexture.ReleaseTemporary(shadowMap);
 			shadowMap = null;
 		}
+		if (cascadedShadowMap) {
+			RenderTexture.ReleaseTemporary(cascadedShadowMap);
+			cascadedShadowMap = null;
+		}
 	}
 	
 	void RenderShadows (ScriptableRenderContext context) {
-		
 		int split;//表示一行划分成几个小块
 		if (shadowTileCount <= 1) {
 			split = 1;
@@ -224,7 +237,7 @@ public class MyPipeline : RenderPipeline
 		int tileIndex = 0;//等于有阴影的光的数量
 		bool hardShadows = false;
 		bool softShadows = false;
-		for (int i = 0; i < cull.visibleLights.Count; i++)
+		for (int i = mainLightExists ? 1 : 0; i < cull.visibleLights.Count; i++)
 		{
 			if (i == maxVisibleLights)
 			{
@@ -358,6 +371,7 @@ public class MyPipeline : RenderPipeline
 	/// </summary>
 	void ConfigureLights ()
 	{
+		mainLightExists = false;
 		shadowTileCount = 0;
 		for (int i = 0; i < cull.visibleLights.Count; i++) 
 		{
@@ -379,8 +393,13 @@ public class MyPipeline : RenderPipeline
 				v.y = -v.y;
 				v.z = -v.z;
 				visibleLightDirectionsOrPositions[i] = v;//负平行光向量的 w分量为0
-				shadow = ConfigureShadows(i, light.light);
+				shadow = ConfigureShadows(i, light.light);//shadowTileCount=1;
 				shadow.z = 1;//这里设置1表示为直射光阴影
+				
+				if (i == 0 && shadow.x > 0f && shadowCascades > 0) {
+					mainLightExists = true;
+					shadowTileCount -= 1;
+				}
 			}
 			else //这里不是平行光了所以现在需要光衰减和光的位置，如点光源聚光灯
 			{

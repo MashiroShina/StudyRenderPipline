@@ -56,6 +56,7 @@
      <Compile Include="Assets\InstancedColor.cs" />
      <Compile Include="Assets\My Pipeline\MyPipeline.cs" />
      <Compile Include="Assets\My Pipeline\MyPipelineAsset.cs" />
+     <Compile Include="Assets\My Pipeline\MyPipelineAssetEditor.cs" />
      <None Include="Assets\My Pipeline\ShaderLibrary\Lit.hlsl" />
      <None Include="Assets\My Pipeline\ShaderLibrary\Unlit.hlsl" />
      <None Include="Assets\My Pipeline\ShaderLibrary\ShadowCaster.hlsl" />
