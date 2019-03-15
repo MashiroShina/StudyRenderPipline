@@ -14,6 +14,7 @@
 			#pragma multi_compile_instancing
 			#pragma instancing_options assumeuniformscaling		
 			
+			#pragma multi_compile _ _CASCADED_SHADOWS_HARD _CASCADED_SHADOWS_SOFT
 			#pragma multi_compile _ _SHADOWS_HARD
 			#pragma multi_compile _ _SHADOWS_SOFT
 			

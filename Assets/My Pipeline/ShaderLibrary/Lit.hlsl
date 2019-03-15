@@ -59,38 +59,64 @@ CBUFFER_END
 CBUFFER_START(_ShadowBuffer)
 	float4x4 _WorldToShadowMatrices[MAX_VISIBLE_LIGHTS];
 	float4 _ShadowData[MAX_VISIBLE_LIGHTS];//x存阴影强度>0表示有. y=0表示硬阴影. zw存放xy的偏移 ,在前面c#中z存是否为直射光然后被偏移覆盖
-	float4 _ShadowMapSize;
+    float4 _ShadowMapSize;
 	float4 _GlobalShadowData;
+	float4x4 _WorldToShadowCascadeMatrices[5];
+	float4 _CascadedShadowMapSize;
+	float _CascadedShadowStrength;
+	float4 _CascadeCullingSpheres[4];
 CBUFFER_END
 
 TEXTURE2D_SHADOW(_ShadowMap);
 SAMPLER_CMP(sampler_ShadowMap);
+
+TEXTURE2D_SHADOW(_CascadedShadowMap);
+SAMPLER_CMP(sampler_CascadedShadowMap);
+
+//判断是否在剔除球里
+float InsideCascadeCullingSphere (int index, float3 worldPos) {
+	float4 s = _CascadeCullingSpheres[index];
+	return dot(worldPos - s.xyz, worldPos - s.xyz) < s.w;
+}
 
 float DistanceToCameraSqr (float3 worldPos) {
 	float3 cameraToFragment = worldPos - _WorldSpaceCameraPos;
 	return dot(cameraToFragment, cameraToFragment);
 }
 
-float HardShadowAttenuation (float4 shadowPos) {
+float HardShadowAttenuation (float4 shadowPos,bool cascade = false) {
+
+    if (cascade) {
+		return SAMPLE_TEXTURE2D_SHADOW(
+			_CascadedShadowMap, sampler_CascadedShadowMap, shadowPos.xyz
+		);
+	}
+	else{
 	//与位置坐标（position）的Z值比较来进行深度测试。如果该点位置的z值比在阴影贴图中对应点的值要小就会返回1，这说明他比任何投射阴影的物体离光源都要近。
 	//反之，在阴影投射物后面就会返回0。              它需要一张贴图，一个采样器状态，以及对应的阴影空间位置作为参数。
 	float attenuation;
-return  attenuation = SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, shadowPos.xyz);
+    return  attenuation = SAMPLE_TEXTURE2D_SHADOW(_ShadowMap, sampler_ShadowMap, shadowPos.xyz);
+	}
 }
 
-float SoftShadowAttenuation (float4 shadowPos) {
+float SoftShadowAttenuation (float4 shadowPos,bool cascade = false) {
     //#if defined(_SHADOWS_SOFT)
 		real tentWeights[9];
 		real2 tentUVs[9];
 		
+		float4 size = cascade ? _CascadedShadowMapSize : _ShadowMapSize;
+		
 		SampleShadow_ComputeSamples_Tent_5x5(
-			_ShadowMapSize, shadowPos.xy, tentWeights, tentUVs
+			size, shadowPos.xy, tentWeights, tentUVs
 		);		
 	    float attenuation = 0;
 		for (int i = 0; i < 9; i++) {
-			attenuation += tentWeights[i] * SAMPLE_TEXTURE2D_SHADOW(
-				_ShadowMap, sampler_ShadowMap, float3(tentUVs[i].xy, shadowPos.z)
-			);
+			//attenuation += tentWeights[i] * SAMPLE_TEXTURE2D_SHADOW(
+			//	_ShadowMap, sampler_ShadowMap, float3(tentUVs[i].xy, shadowPos.z)
+			//);
+			attenuation += tentWeights[i] * HardShadowAttenuation(
+			float4(tentUVs[i].xy, shadowPos.z, 0), cascade
+		    );
 		}
 	//#endif	
 	return attenuation;
@@ -101,6 +127,10 @@ float ShadowAttenuation (int index, float3 worldPos) {
     #if !defined(_SHADOWS_HARD) && !defined(_SHADOWS_SOFT)
 		return 1.0;
 	#endif
+	
+	if (DistanceToCameraSqr(worldPos) > _GlobalShadowData.y) {
+		return 1.0;
+	}
     
     if (_ShadowData[index].x <= 0 || DistanceToCameraSqr(worldPos) > _GlobalShadowData.y) //x存阴影强度>0表示有
     {
@@ -110,6 +140,7 @@ float ShadowAttenuation (int index, float3 worldPos) {
 	float4 shadowPos = mul(_WorldToShadowMatrices[index], float4(worldPos, 1.0));
 	shadowPos.xyz /= shadowPos.w;// NDC
 	shadowPos.xy = saturate(shadowPos.xy); 
+	//这里是采样的图块的位置（有图案）
 	//* _GlobalShadowData.x 是让大图块变成小图块
 	//+ _ShadowData[index].zw是移动小图块
 	shadowPos.xy = shadowPos.xy * _GlobalShadowData.x + _ShadowData[index].zw;//z=tileOffsetX * tileScale;&&w=tileOffsetY * tileScale;
@@ -137,6 +168,40 @@ float ShadowAttenuation (int index, float3 worldPos) {
 	return lerp(1, attenuation, _ShadowData[index].x);
 }
 
+float CascadedShadowAttenuation (float3 worldPos) {
+    #if !defined(_CASCADED_SHADOWS_HARD) && !defined(_CASCADED_SHADOWS_SOFT)
+		return 1.0;
+	#endif
+	float4 cascadeFlags = float4(//(1,1,1,1), (0,1,1,1), (0,0,1,1), (0,0,0,1),(0,0,0,0)
+		InsideCascadeCullingSphere(0, worldPos),
+		InsideCascadeCullingSphere(1, worldPos),
+		InsideCascadeCullingSphere(2, worldPos),
+		InsideCascadeCullingSphere(3, worldPos)
+	);
+	//return dot(cascadeFlags, .8);
+	cascadeFlags.yzw = saturate(cascadeFlags.yzw - cascadeFlags.xyz);
+	float cascadeIndex = 4 - dot(cascadeFlags, float4(4, 3, 2, 1));//0,1,2,3,4
+	float4 shadowPos = mul(
+		_WorldToShadowCascadeMatrices[cascadeIndex], float4(worldPos, 1.0)
+	);
+	float attenuation;
+	#if defined(_CASCADED_SHADOWS_HARD)
+		attenuation = HardShadowAttenuation(shadowPos, true);
+	#else
+	    attenuation = SoftShadowAttenuation(shadowPos, true);
+	#endif
+	
+	return lerp(1, attenuation, _CascadedShadowStrength);
+}
+
+float3 MainLight (float3 normal, float3 worldPos){
+    float shadowAttenuation = CascadedShadowAttenuation(worldPos);
+    float3 lightColor = _VisibleLightColors[0].rgb;
+    float3 lightDirection = _VisibleLightDirectionsOrPositions[0].xyz;
+    float diffuse = saturate(dot(normal, lightDirection));
+    diffuse *= shadowAttenuation;
+    return diffuse * lightColor;
+}
 //==========================================================================================
 
 
@@ -194,6 +259,9 @@ float4 LitPassFragment (VertexOutput input) : SV_TARGET {
 	
 	//第一个unity_4LightIndices0包含了前4个光源,unity_LightIndicesOffsetAndCount.y可以看到受到到的光照数量
 	diffuseLight = input.vertexLighting;
+	#if defined(_CASCADED_SHADOWS_HARD) || defined(_CASCADED_SHADOWS_SOFT)
+		diffuseLight += MainLight(input.normal, input.worldPos);
+	#endif
 	for (int i = 0; i < min(unity_LightIndicesOffsetAndCount.y,4); i++) {
 		int lightIndex = unity_4LightIndices0[i];
 		float shadowAttenuation = ShadowAttenuation(lightIndex, input.worldPos);
