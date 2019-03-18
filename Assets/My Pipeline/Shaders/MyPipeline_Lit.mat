@@ -18,7 +18,19 @@ Material:
   disabledShaderPasses: []
   m_SavedProperties:
     serializedVersion: 3
-    m_TexEnvs: []
-    m_Floats: []
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: 8651da05b92214929aa5046a350dd0c5, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - _Clipping: 0
+    - _Cull: 2
+    - _Cutoff: 0.74
+    - _DstBlend: 0
+    - _SrcBlend: 1
+    - _intens: 0.5
     m_Colors:
-    - _Color: {r: 0.9811321, g: 0.9811321, b: 0.9811321, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _ShadowColor: {r: 1, g: 1, b: 1, a: 1}
+    - _myColors: {r: 1, g: 1, b: 1, a: 1}

@@ -67,11 +67,19 @@ CBUFFER_START(_ShadowBuffer)
 	float4 _CascadeCullingSpheres[4];
 CBUFFER_END
 
+CBUFFER_START(UnityPerMaterial)
+	float4 _MainTex_ST;
+	float _Cutoff;
+CBUFFER_END
+
 TEXTURE2D_SHADOW(_ShadowMap);
 SAMPLER_CMP(sampler_ShadowMap);
 
 TEXTURE2D_SHADOW(_CascadedShadowMap);
 SAMPLER_CMP(sampler_CascadedShadowMap);
+
+TEXTURE2D(_MainTex);
+SAMPLER(sampler_MainTex);
 
 //判断是否在剔除球里
 float InsideCascadeCullingSphere (int index, float3 worldPos) {
@@ -218,6 +226,7 @@ UNITY_INSTANCING_BUFFER_END(PerInstance)        //CBUFFER_END
 struct VertexInput {
 	float4 pos : POSITION;
 	float3 normal : NORMAL;
+	float2 uv : TEXCOORD0;
 	UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -226,6 +235,7 @@ struct VertexOutput {
 	float3 normal : TEXCOORD0;
 	float3 worldPos : TEXCOORD1;
 	float3 vertexLighting : TEXCOORD2;
+	float2 uv : TEXCOORD3;
 	UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -233,10 +243,12 @@ VertexOutput LitPassVertex (VertexInput input) {
 	VertexOutput output;
 	UNITY_SETUP_INSTANCE_ID(input);
 	UNITY_TRANSFER_INSTANCE_ID(input, output);//在Vertex Shader中把Instance ID从输入结构拷贝至输出结构中
+	
 	float4 worldPos = mul(UNITY_MATRIX_M, float4(input.pos.xyz, 1.0));
 	output.clipPos = mul(unity_MatrixVP,worldPos);
 	output.normal = mul((float3x3)UNITY_MATRIX_M, input.normal);
 	output.worldPos = worldPos.xyz;
+	output.uv = TRANSFORM_TEX(input.uv, _MainTex);
 	
 	output.vertexLighting = 0;//顶点光照 四个之后影响的光源当不重要的处理 
 	for (int i = 4; i < min(unity_LightIndicesOffsetAndCount.y, 8); i++) {
@@ -247,10 +259,16 @@ VertexOutput LitPassVertex (VertexInput input) {
 	return output;
 }
 
-float4 LitPassFragment (VertexOutput input) : SV_TARGET {
+float4 LitPassFragment (VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_FACE_SEMANTIC) : SV_TARGET {
     UNITY_SETUP_INSTANCE_ID(input);
     input.normal = normalize(input.normal);
-    float3 albedo = UNITY_ACCESS_INSTANCED_PROP(PerInstance, _Color).rgb;//放入instance缓存
+    input.normal = IS_FRONT_VFACE(isFrontFace, input.normal, -input.normal);
+    //float3 albedo = UNITY_ACCESS_INSTANCED_PROP(PerInstance, _Color).rgb;//放入instance缓存
+	float4 albedoAlpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
+	albedoAlpha *= UNITY_ACCESS_INSTANCED_PROP(PerInstance, _Color);
+	#if defined(_CLIPPING)
+	clip(albedoAlpha.a - _Cutoff);
+	#endif
 	
 	float3 diffuseLight = 0;
 	//for (int i = 0; i < MAX_VISIBLE_LIGHTS; i++) {
@@ -271,7 +289,7 @@ float4 LitPassFragment (VertexOutput input) : SV_TARGET {
 	//	int lightIndex = unity_4LightIndices1[i - 4];
 	//	diffuseLight += DiffuseLight(lightIndex, input.normal, input.worldPos);
 	//}
-	float3 color = diffuseLight*albedo;
+	float3 color = diffuseLight*albedoAlpha;
 	return float4(color, 1);
 }
 
