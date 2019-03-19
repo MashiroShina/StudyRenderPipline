@@ -172,7 +172,7 @@ public class MyPipeline : RenderPipeline
 		var drawSettings = new DrawRendererSettings(
 			camera, new ShaderPassName("SRPDefaultUnlit")
 		)
-		{
+		{ 
 			flags = drawFlags, 
 		};
 		if (cull.visibleLights.Count > 0)//设置光源索引。light数量=0时 设置Unity会奔溃的     

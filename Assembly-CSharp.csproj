@@ -53,7 +53,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+     <Compile Include="Assets\DoubleSidedMeshMenuItem.cs" />
      <Compile Include="Assets\InstancedColor.cs" />
+     <Compile Include="Assets\LitShaderGUI.cs" />
      <Compile Include="Assets\My Pipeline\MyPipeline.cs" />
      <Compile Include="Assets\My Pipeline\MyPipelineAsset.cs" />
      <Compile Include="Assets\My Pipeline\MyPipelineAssetEditor.cs" />

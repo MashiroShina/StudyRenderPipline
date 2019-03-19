@@ -132,7 +132,9 @@ float SoftShadowAttenuation (float4 shadowPos,bool cascade = false) {
 
 float ShadowAttenuation (int index, float3 worldPos) {
 
-    #if !defined(_SHADOWS_HARD) && !defined(_SHADOWS_SOFT)
+   #if !defined(_RECEIVE_SHADOWS)
+		return 1.0;
+	#elif !defined(_SHADOWS_HARD) && !defined(_SHADOWS_SOFT)
 		return 1.0;
 	#endif
 	
@@ -177,7 +179,9 @@ float ShadowAttenuation (int index, float3 worldPos) {
 }
 
 float CascadedShadowAttenuation (float3 worldPos) {
-    #if !defined(_CASCADED_SHADOWS_HARD) && !defined(_CASCADED_SHADOWS_SOFT)
+    #if !defined(_RECEIVE_SHADOWS)
+		return 1.0;
+	#elif !defined(_CASCADED_SHADOWS_HARD) && !defined(_CASCADED_SHADOWS_SOFT)
 		return 1.0;
 	#endif
 	float4 cascadeFlags = float4(//(1,1,1,1), (0,1,1,1), (0,0,1,1), (0,0,0,1),(0,0,0,0)
@@ -266,7 +270,7 @@ float4 LitPassFragment (VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_
     //float3 albedo = UNITY_ACCESS_INSTANCED_PROP(PerInstance, _Color).rgb;//放入instance缓存
 	float4 albedoAlpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
 	albedoAlpha *= UNITY_ACCESS_INSTANCED_PROP(PerInstance, _Color);
-	#if defined(_CLIPPING)
+	#if defined(_CLIPPING_ON)
 	clip(albedoAlpha.a - _Cutoff);
 	#endif
 	
@@ -289,8 +293,8 @@ float4 LitPassFragment (VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_
 	//	int lightIndex = unity_4LightIndices1[i - 4];
 	//	diffuseLight += DiffuseLight(lightIndex, input.normal, input.worldPos);
 	//}
-	float3 color = diffuseLight*albedoAlpha;
-	return float4(color, 1);
+	float3 color = diffuseLight*albedoAlpha.rgb;
+	return float4(color, albedoAlpha.a);
 }
 
 #endif // MYRP_UNLIT_INCLUDED
