@@ -12,6 +12,11 @@
 		[Enum(Off, 0, On, 1)] _ZWrite ("Z Write", Float) = 1
 		[Toggle(_RECEIVE_SHADOWS)] _ReceiveShadows ("Receive Shadows", Float) = 1
 		
+		 _RemapInputMin ("Remap input min value", Range(0, 1)) = 0
+        _RemapInputMax ("Remap input max value", Range(0, 1)) = 1
+        _RemapOutputMin ("Remap output min value", Range(0, 1)) = 0
+        _RemapOutputMax ("Remap output max value", Range(0, 1)) = 1
+		
 	}
 	
 	SubShader {
@@ -36,9 +41,9 @@
 			
 			#pragma vertex LitPassVertex
 			#pragma fragment LitPassFragment
-			
+            			
 			#include "../ShaderLibrary/Lit.hlsl"
-			
+			//#include "../ShaderLibrary/Cust.hlsl"
 			ENDHLSL
 		}
 		Pass {

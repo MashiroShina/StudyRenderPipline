@@ -165,6 +165,8 @@ public class MyPipeline : RenderPipeline
 		cameraBuffer.SetGlobalVectorArray(visibleLightDirectionsOrPositionsId, visibleLightDirectionsOrPositions);
 		cameraBuffer.SetGlobalVectorArray(visibleLightAttenuationsId, visibleLightAttenuations);
 		cameraBuffer.SetGlobalVectorArray(visibleLightSpotDirectionsId, visibleLightSpotDirections);
+		cameraBuffer.SetGlobalMatrix(Shader.PropertyToID("_PojectMatrixForme"),Camera.main.projectionMatrix);
+		//Debug.Log(Camera.main.projectionMatrix);
 		//==================
 		context.ExecuteCommandBuffer(cameraBuffer);
 		cameraBuffer.Clear();

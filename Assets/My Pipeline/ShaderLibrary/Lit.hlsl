@@ -247,9 +247,10 @@ VertexOutput LitPassVertex (VertexInput input) {
 	VertexOutput output;
 	UNITY_SETUP_INSTANCE_ID(input);
 	UNITY_TRANSFER_INSTANCE_ID(input, output);//在Vertex Shader中把Instance ID从输入结构拷贝至输出结构中
-	
 	float4 worldPos = mul(UNITY_MATRIX_M, float4(input.pos.xyz, 1.0));
 	output.clipPos = mul(unity_MatrixVP,worldPos);
+	//float4 screens=(1024,1024,1+1.0/1024,1+1.0/1024);
+	//output.worldPos=output.clipPos/screens;
 	output.normal = mul((float3x3)UNITY_MATRIX_M, input.normal);
 	output.worldPos = worldPos.xyz;
 	output.uv = TRANSFORM_TEX(input.uv, _MainTex);

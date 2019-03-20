@@ -4,12 +4,17 @@
     <e p="$PROJECT_DIR$" t="IncludeRecursive">
       <e p="Assembly-CSharp.csproj" t="IncludeRecursive" />
       <e p="Assets" t="Include">
+        <e p="DoubleSidedMeshMenuItem.cs" t="Include" />
         <e p="InstancedColor.cs" t="Include" />
+        <e p="LitShaderGUI.cs" t="Include" />
         <e p="My Pipeline" t="Include">
           <e p="MyPipeline.cs" t="Include" />
           <e p="MyPipelineAsset.cs" t="Include" />
+          <e p="MyPipelineAssetEditor.cs" t="Include" />
           <e p="ShaderLibrary" t="Include">
+            <e p="Cust.hlsl" t="Include" />
             <e p="Lit.hlsl" t="Include" />
+            <e p="ShadowCaster.hlsl" t="Include" />
             <e p="Unlit.hlsl" t="Include" />
           </e>
           <e p="Shaders" t="Include">

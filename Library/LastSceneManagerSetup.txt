@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/Scenes/Transparent.unity
+- path: Assets/Scenes/Toon.unity
   isLoaded: 1
   isActive: 1
