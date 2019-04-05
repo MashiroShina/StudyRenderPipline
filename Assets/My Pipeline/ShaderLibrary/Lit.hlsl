@@ -3,6 +3,8 @@
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Shadow/ShadowSamplingTent.hlsl"
+#include "Light.hlsl"
+
 CBUFFER_START(UnityPerFrame)
 	float4x4 unity_MatrixVP;
 CBUFFER_END
@@ -13,7 +15,7 @@ CBUFFER_START(UnityPerDraw)
 	float4 unity_4LightIndices0, unity_4LightIndices1;//得到索引，它属于缓存区
 CBUFFER_END
 
-//Light Buffer===========================================================================
+//Light Buffer======================================================================================================================================================
 #define MAX_VISIBLE_LIGHTS 16
 CBUFFER_START(_LightBuffer)
 	float4 _VisibleLightColors[MAX_VISIBLE_LIGHTS];
@@ -22,17 +24,18 @@ CBUFFER_START(_LightBuffer)
 	float4 _VisibleLightSpotDirections[MAX_VISIBLE_LIGHTS];
 CBUFFER_END
 
-
-float3 DiffuseLight (int index, float3 normal, float3 worldPos, float shadowAttenuation) {
+//float3 DiffuseLight (int index, float3 normal, float3 worldPos, float shadowAttenuation) 
+float3 GenericLight (int index, LitSurface s, float shadowAttenuation){
 	float3 lightColor = _VisibleLightColors[index].rgb;
 	float4 lightPositionOrDirection = _VisibleLightDirectionsOrPositions[index];
 	float4 lightAttenuation = _VisibleLightAttenuations[index];
 	float3 spotDirection = _VisibleLightSpotDirections[index].xyz;
 	
-	float3 lightVector = lightPositionOrDirection.xyz - worldPos * lightPositionOrDirection.w;//直射光w分量为0，如果是点光源为1刚好
+	float3 lightVector = lightPositionOrDirection.xyz - s.position * lightPositionOrDirection.w;//直射光w分量为0，如果是点光源为1刚好
 	//这里的worldpos是 当前物体的，这样子刚好得到点光源对当前物体的向量
 	float3 lightDirection = normalize(lightVector);
-	float diffuse = saturate(dot(normal, lightDirection));
+	//float diffuse = saturate(dot(normal, lightDirection));
+	float3 color = LightSurface(s, lightDirection);
 	//设置光照范围(点光源)+设置光照衰减========================================================
 	//(1-(d^2/r^2)^2)^2)
 	float rangeFade = dot(lightVector, lightVector) * lightAttenuation.x;//点光源范围
@@ -44,18 +47,18 @@ float3 DiffuseLight (int index, float3 normal, float3 worldPos, float shadowAtte
 	spotFade *= spotFade;
 	
 	float distanceSqr = max(dot(lightVector, lightVector), 0.00001);
-	diffuse *= shadowAttenuation * spotFade * rangeFade / distanceSqr;
+	color *= shadowAttenuation * spotFade * rangeFade / distanceSqr;
 	//======================================================================================
 
-	return diffuse * lightColor;
+	return color * lightColor;
 }
-//===========================================================================================
+//======================================================================================================================================================================
 
 CBUFFER_START(UnityPerCamera)
 	float3 _WorldSpaceCameraPos;
 CBUFFER_END
 
-//_ShadowBuffer && Sampling Depth============================================================
+//_ShadowBuffer && Sampling Depth=======================================================================================================================================
 CBUFFER_START(_ShadowBuffer)
 	float4x4 _WorldToShadowMatrices[MAX_VISIBLE_LIGHTS];
 	float4 _ShadowData[MAX_VISIBLE_LIGHTS];//x存阴影强度>0表示有. y=0表示硬阴影. zw存放xy的偏移 ,在前面c#中z存是否为直射光然后被偏移覆盖
@@ -70,6 +73,7 @@ CBUFFER_END
 CBUFFER_START(UnityPerMaterial)
 	float4 _MainTex_ST;
 	float _Cutoff;
+	float _Smoothness;
 CBUFFER_END
 
 TEXTURE2D_SHADOW(_ShadowMap);
@@ -151,8 +155,9 @@ float ShadowAttenuation (int index, float3 worldPos) {
 	shadowPos.xyz /= shadowPos.w;// NDC
 	shadowPos.xy = saturate(shadowPos.xy); 
 	//这里是采样的图块的位置（有图案）
-	//* _GlobalShadowData.x 是让大图块变成小图块
+	//* _GlobalShadowData.x 是让大图块变成小图块//new Vector4(tileScale, shadowDistance*shadowDistance)
 	//+ _ShadowData[index].zw是移动小图块
+	//0～1
 	shadowPos.xy = shadowPos.xy * _GlobalShadowData.x + _ShadowData[index].zw;//z=tileOffsetX * tileScale;&&w=tileOffsetY * tileScale;
 	float attenuation;
 	
@@ -205,16 +210,16 @@ float CascadedShadowAttenuation (float3 worldPos) {
 	
 	return lerp(1, attenuation, _CascadedShadowStrength);
 }
-
-float3 MainLight (float3 normal, float3 worldPos){
-    float shadowAttenuation = CascadedShadowAttenuation(worldPos);
+float3 MainLight (LitSurface s){
+    float shadowAttenuation = CascadedShadowAttenuation(s.position);
     float3 lightColor = _VisibleLightColors[0].rgb;
     float3 lightDirection = _VisibleLightDirectionsOrPositions[0].xyz;
-    float diffuse = saturate(dot(normal, lightDirection));
-    diffuse *= shadowAttenuation;
-    return diffuse * lightColor;
+    //float diffuse = saturate(dot(normal, lightDirection));
+    float3 color = LightSurface(s, lightDirection);
+    color *= shadowAttenuation;
+    return color * lightColor;
 }
-//==========================================================================================
+//=====================================================================================================================================================================
 
 
 
@@ -255,10 +260,12 @@ VertexOutput LitPassVertex (VertexInput input) {
 	output.worldPos = worldPos.xyz;
 	output.uv = TRANSFORM_TEX(input.uv, _MainTex);
 	
+	LitSurface surface = GetLitSurfaceVertex(output.normal, output.worldPos);
 	output.vertexLighting = 0;//顶点光照 四个之后影响的光源当不重要的处理 
 	for (int i = 4; i < min(unity_LightIndicesOffsetAndCount.y, 8); i++) {
 		int lightIndex = unity_4LightIndices1[i - 4];
-		output.vertexLighting += DiffuseLight(lightIndex, output.normal, output.worldPos,1);//顶点光源不会有阴影，所以在LitPassVertex.中将阴影衰减设为1
+		//output.vertexLighting += DiffuseLight(lightIndex, output.normal, output.worldPos,1);//顶点光源不会有阴影，所以在LitPassVertex.中将阴影衰减设为1
+		output.vertexLighting += GenericLight(lightIndex, surface, 1);
 	}
 	
 	return output;
@@ -275,26 +282,32 @@ float4 LitPassFragment (VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_
 	clip(albedoAlpha.a - _Cutoff);
 	#endif
 	
-	float3 diffuseLight = 0;
 	//for (int i = 0; i < MAX_VISIBLE_LIGHTS; i++) {
 	//	diffuseLight += DiffuseLight(i, input.normal, input.worldPos);
 	//}
+	//第一个unity_4LightIndiczes0包含了前4个光源,unity_LightIndicesOffsetAndCount.y可以看到受到到的光照数量
+	float3 viewDir = normalize(_WorldSpaceCameraPos - input.worldPos.xyz);
+	LitSurface surface = GetLitSurface(
+		input.normal, input.worldPos, viewDir,
+		albedoAlpha.rgb, _Smoothness
+	);
+	//diffuse
+	float3 color = input.vertexLighting * surface.diffuse;
 	
-	//第一个unity_4LightIndices0包含了前4个光源,unity_LightIndicesOffsetAndCount.y可以看到受到到的光照数量
-	diffuseLight = input.vertexLighting;
 	#if defined(_CASCADED_SHADOWS_HARD) || defined(_CASCADED_SHADOWS_SOFT)
-		diffuseLight += MainLight(input.normal, input.worldPos);
+		color += MainLight(surface);//lightDirection
 	#endif
 	for (int i = 0; i < min(unity_LightIndicesOffsetAndCount.y,4); i++) {
 		int lightIndex = unity_4LightIndices0[i];
 		float shadowAttenuation = ShadowAttenuation(lightIndex, input.worldPos);
-		diffuseLight += DiffuseLight(lightIndex, input.normal, input.worldPos, shadowAttenuation);
+		//diffuseLight += DiffuseLight(lightIndex, input.normal, input.worldPos, shadowAttenuation);
+		color += GenericLight(lightIndex, surface, shadowAttenuation);
 	}
 	//for (int i = 4; i < min(unity_LightIndicesOffsetAndCount.y, 8); i++) {
 	//	int lightIndex = unity_4LightIndices1[i - 4];
 	//	diffuseLight += DiffuseLight(lightIndex, input.normal, input.worldPos);
 	//}
-	float3 color = diffuseLight*albedoAlpha.rgb;
+	//float3 color = diffuseLight*albedoAlpha.rgb;
 	return float4(color, albedoAlpha.a);
 }
 

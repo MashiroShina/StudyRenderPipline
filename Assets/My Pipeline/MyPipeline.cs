@@ -337,7 +337,7 @@ public class MyPipeline : RenderPipeline
 				continue;
 			} 
 			Vector2 tileOffset = ConfigureShadowTile(tileIndex, split, tileSize);
-			shadowData[i].z = tileOffset.x * tileScale;//此时z已经判断过直射光了覆盖即可 
+			shadowData[i].z = tileOffset.x * tileScale;//此时z已经判断过直射光了覆盖即可 0123 * 1/4
 			shadowData[i].w = tileOffset.y * tileScale;
 			//调用阴影命令缓冲区的SetViewProjectionMatrices 方法，然后执行命令并清理该缓存区。
 			shadowBuffer.SetViewProjectionMatrices(viewMatrix, projectionMatrix);//这里是在黑色的texture上绘制图片上去

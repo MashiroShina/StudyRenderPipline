@@ -4,6 +4,7 @@
 		_Color ("Color", Color) = (1, 1, 1, 1)
 		_MainTex("Albedo & Alpha", 2D) = "white" {}
 		_Cutoff ("Alpha Cutoff", Range(0, 1)) = 0.5
+		_Smoothness ("Smoothness", Range(0, 1)) = 0.5
 		//[Toggle(_CLIPPING)] _Clipping ("Alpha Clipping", Float) = 0
 		[KeywordEnum(Off, On, Shadows)] _Clipping ("Alpha Clipping", Float) = 0
 		[Enum(UnityEngine.Rendering.CullMode)]_Cull ("Cull", Float) = 2
@@ -43,6 +44,7 @@
 			#pragma fragment LitPassFragment
             			
 			#include "../ShaderLibrary/Lit.hlsl"
+			
 			//#include "../ShaderLibrary/Cust.hlsl"
 			ENDHLSL
 		}

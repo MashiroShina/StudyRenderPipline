@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/Scenes/Toon.unity
+- path: Assets/Scenes/Shadow.unity
   isLoaded: 1
   isActive: 1
