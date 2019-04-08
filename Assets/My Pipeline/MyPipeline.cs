@@ -181,6 +181,8 @@ public class MyPipeline : RenderPipeline
 		{
 			drawSettings.rendererConfiguration = RendererConfiguration.PerObjectLightIndices8;
 		}           
+		drawSettings.rendererConfiguration |=
+			RendererConfiguration.PerObjectReflectionProbes;
 		//drawSettings.flags = drawFlags;//设置动态批处理和GPUinstance
 		drawSettings.sorting.flags = SortFlags.CommonOpaque;//设置渲染顺序
 

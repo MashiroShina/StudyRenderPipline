@@ -355,6 +355,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 1, g: 0, b: 0.77135277, a: 1}
+  smoothness: 0.5
 --- !u!1 &681807391
 GameObject:
   m_ObjectHideFlags: 0
@@ -388,6 +389,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 1, g: 1, b: 1, a: 1}
+  smoothness: 0.5
 --- !u!135 &681807393
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -565,6 +567,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0, g: 0.85651875, b: 1, a: 1}
+  smoothness: 0.5
 --- !u!1 &943049886
 GameObject:
   m_ObjectHideFlags: 0
@@ -598,6 +601,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 1, g: 1, b: 1, a: 1}
+  smoothness: 0.5
 --- !u!135 &943049888
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -844,6 +848,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.08611512, g: 1, b: 0, a: 1}
+  smoothness: 0.5
 --- !u!1 &1252752327
 GameObject:
   m_ObjectHideFlags: 0
@@ -949,6 +954,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 0.5638509, g: 0, b: 1, a: 1}
+  smoothness: 0.5
 --- !u!1 &1265562779
 GameObject:
   m_ObjectHideFlags: 0
@@ -1054,6 +1060,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 1, g: 0.55914056, b: 0, a: 1}
+  smoothness: 0.5
 --- !u!1 &1310130285
 GameObject:
   m_ObjectHideFlags: 0
@@ -1241,6 +1248,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 1, g: 0, b: 0, a: 1}
+  smoothness: 0.5
 --- !u!1 &1663133944
 GameObject:
   m_ObjectHideFlags: 0
@@ -1274,6 +1282,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 1, g: 1, b: 1, a: 1}
+  smoothness: 0.5
 --- !u!135 &1663133946
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -1590,3 +1599,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   color: {r: 1, g: 1, b: 1, a: 1}
+  smoothness: 0.5

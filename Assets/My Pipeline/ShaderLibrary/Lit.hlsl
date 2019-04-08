@@ -3,6 +3,8 @@
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Shadow/ShadowSamplingTent.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/ImageBasedLighting.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/EntityLighting.hlsl"
 #include "Light.hlsl"
 
 CBUFFER_START(UnityPerFrame)
@@ -10,9 +12,14 @@ CBUFFER_START(UnityPerFrame)
 CBUFFER_END
 
 CBUFFER_START(UnityPerDraw)
-	float4x4 unity_ObjectToWorld; 
+	float4x4 unity_ObjectToWorld, unity_WorldToObject; 
 	float4 unity_LightIndicesOffsetAndCount;//它的y分量表示物体受影响的光源数量。x分量是第二种方法要用到的偏移量。
 	float4 unity_4LightIndices0, unity_4LightIndices1;//得到索引，它属于缓存区
+	//BoxProjection&&ProbeBlend
+	float4 unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax;
+	float4 unity_SpecCube0_ProbePosition, unity_SpecCube0_HDR;
+	float4 unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax;
+	float4 unity_SpecCube1_ProbePosition, unity_SpecCube1_HDR;
 CBUFFER_END
 
 //Light Buffer======================================================================================================================================================
@@ -50,7 +57,46 @@ float3 GenericLight (int index, LitSurface s, float shadowAttenuation){
 	color *= shadowAttenuation * spotFade * rangeFade / distanceSqr;
 	//======================================================================================
 
-	return color * lightColor;
+	return color * lightColor;//除了主光源的其他光源
+}
+float3 BoxProjection (
+	float3 direction, float3 position,
+	float4 cubemapPosition, float4 boxMin, float4 boxMax
+) {
+	UNITY_BRANCH
+	if (cubemapPosition.w > 0) {
+		float3 factors =
+			((direction > 0 ? boxMax.xyz : boxMin.xyz) - position) / direction;
+		float scalar = min(min(factors.x, factors.y), factors.z);
+		direction = direction * scalar + (position - cubemapPosition.xyz);
+	}
+	return direction;
+}
+float3 SampleEnvironment (LitSurface s) {
+    float3 reflectVector = reflect(-s.viewDir, s.normal);
+    float mip = PerceptualRoughnessToMipmapLevel(s.perceptualRoughness);
+    float3 uvw = BoxProjection(
+		reflectVector, s.position, unity_SpecCube0_ProbePosition,
+		unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax
+	);
+    float4 sample = SAMPLE_TEXTURECUBE_LOD(
+		unity_SpecCube0, samplerunity_SpecCube0, uvw, mip
+	);
+    float3 color = DecodeHDREnvironment(sample, unity_SpecCube0_HDR);
+    
+    float blend = unity_SpecCube0_BoxMin.w;
+	if (blend < 0.99999) {
+		uvw = BoxProjection(
+			reflectVector, s.position,
+			unity_SpecCube1_ProbePosition,
+			unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax
+		);
+		sample = SAMPLE_TEXTURECUBE_LOD(
+			unity_SpecCube1, samplerunity_SpecCube0, uvw, mip
+		);
+		color = lerp(sample.rgb, DecodeHDREnvironment(sample, unity_SpecCube1_HDR), blend);
+	}
+	return color;
 }
 //======================================================================================================================================================================
 
@@ -73,7 +119,6 @@ CBUFFER_END
 CBUFFER_START(UnityPerMaterial)
 	float4 _MainTex_ST;
 	float _Cutoff;
-	float _Smoothness;
 CBUFFER_END
 
 TEXTURE2D_SHADOW(_ShadowMap);
@@ -225,11 +270,14 @@ float3 MainLight (LitSurface s){
 
 //instance必要的宏===========================================================================
 #define UNITY_MATRIX_M unity_ObjectToWorld
+#define UNITY_MATRIX_I_M unity_WorldToObject
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl"
 //==========================================================================================
 
 UNITY_INSTANCING_BUFFER_START(PerInstance)      //CBUFFER_START(UnityPerMaterial)
 	UNITY_DEFINE_INSTANCED_PROP(float4, _Color) //float4 _Color;
+	UNITY_DEFINE_INSTANCED_PROP(float, _Metallic)
+	UNITY_DEFINE_INSTANCED_PROP(float, _Smoothness)
 UNITY_INSTANCING_BUFFER_END(PerInstance)        //CBUFFER_END
 
 struct VertexInput {
@@ -256,7 +304,11 @@ VertexOutput LitPassVertex (VertexInput input) {
 	output.clipPos = mul(unity_MatrixVP,worldPos);
 	//float4 screens=(1024,1024,1+1.0/1024,1+1.0/1024);
 	//output.worldPos=output.clipPos/screens;
-	output.normal = mul((float3x3)UNITY_MATRIX_M, input.normal);
+	#if defined(UNITY_ASSUME_UNIFORM_SCALING)
+		output.normal = mul((float3x3)UNITY_MATRIX_M, input.normal);
+	#else
+		output.normal = normalize(mul(input.normal, (float3x3)UNITY_MATRIX_I_M));
+	#endif
 	output.worldPos = worldPos.xyz;
 	output.uv = TRANSFORM_TEX(input.uv, _MainTex);
 	
@@ -289,8 +341,13 @@ float4 LitPassFragment (VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_
 	float3 viewDir = normalize(_WorldSpaceCameraPos - input.worldPos.xyz);
 	LitSurface surface = GetLitSurface(
 		input.normal, input.worldPos, viewDir,
-		albedoAlpha.rgb, _Smoothness
+		albedoAlpha.rgb,
+		UNITY_ACCESS_INSTANCED_PROP(PerInstance, _Metallic),
+		UNITY_ACCESS_INSTANCED_PROP(PerInstance, _Smoothness)
 	);
+	#if defined(_PREMULTIPLY_ALPHA)
+		PremultiplyAlpha(surface, albedoAlpha.a);
+	#endif
 	//diffuse
 	float3 color = input.vertexLighting * surface.diffuse;
 	
@@ -308,6 +365,7 @@ float4 LitPassFragment (VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_
 	//	diffuseLight += DiffuseLight(lightIndex, input.normal, input.worldPos);
 	//}
 	//float3 color = diffuseLight*albedoAlpha.rgb;
+	color += ReflectEnvironment(surface, SampleEnvironment(surface));
 	return float4(color, albedoAlpha.a);
 }
 

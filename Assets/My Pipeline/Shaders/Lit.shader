@@ -4,7 +4,9 @@
 		_Color ("Color", Color) = (1, 1, 1, 1)
 		_MainTex("Albedo & Alpha", 2D) = "white" {}
 		_Cutoff ("Alpha Cutoff", Range(0, 1)) = 0.5
+		_Metallic ("Metallic", Range(0, 1)) = 0
 		_Smoothness ("Smoothness", Range(0, 1)) = 0.5
+		
 		//[Toggle(_CLIPPING)] _Clipping ("Alpha Clipping", Float) = 0
 		[KeywordEnum(Off, On, Shadows)] _Clipping ("Alpha Clipping", Float) = 0
 		[Enum(UnityEngine.Rendering.CullMode)]_Cull ("Cull", Float) = 2
@@ -12,11 +14,12 @@
 		[Enum(UnityEngine.Rendering.BlendMode)] _DstBlend ("Dst Blend", Float) = 0
 		[Enum(Off, 0, On, 1)] _ZWrite ("Z Write", Float) = 1
 		[Toggle(_RECEIVE_SHADOWS)] _ReceiveShadows ("Receive Shadows", Float) = 1
+		[Toggle(_PREMULTIPLY_ALPHA)] _PremulAlpha ("Premultiply Alpha", Float) = 0
 		
-		 _RemapInputMin ("Remap input min value", Range(0, 1)) = 0
-        _RemapInputMax ("Remap input max value", Range(0, 1)) = 1
-        _RemapOutputMin ("Remap output min value", Range(0, 1)) = 0
-        _RemapOutputMax ("Remap output max value", Range(0, 1)) = 1
+//		_RemapInputMin ("Remap input min value", Range(0, 1)) = 0
+//        _RemapInputMax ("Remap input max value", Range(0, 1)) = 1
+//        _RemapOutputMin ("Remap output min value", Range(0, 1)) = 0
+//        _RemapOutputMax ("Remap output max value", Range(0, 1)) = 1
 		
 	}
 	
@@ -31,7 +34,7 @@
 			#pragma target 3.5
 			
 			#pragma multi_compile_instancing
-			#pragma instancing_options assumeuniformscaling	
+			//#pragma instancing_options assumeuniformscaling	
 			//#pragma shader_feature _CLIPPING
 			#pragma shader_feature _CLIPPING_ON	
 			#pragma shader_feature _RECEIVE_SHADOWS
