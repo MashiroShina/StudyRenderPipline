@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/Scenes/Shadow.unity
+- path: Assets/Scenes/Reflections.unity
   isLoaded: 1
   isActive: 1

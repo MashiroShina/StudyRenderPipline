@@ -61,7 +61,6 @@
      <Compile Include="Assets\My Pipeline\MyPipelineAssetEditor.cs" />
      <None Include="Assets\My Pipeline\ShaderLibrary\Light.hlsl" />
      <None Include="Assets\My Pipeline\ShaderLibrary\Lit.hlsl" />
-     <None Include="Assets\My Pipeline\ShaderLibrary\Cust.hlsl" />
      <None Include="Assets\My Pipeline\ShaderLibrary\Unlit.hlsl" />
      <None Include="Assets\My Pipeline\ShaderLibrary\ShadowCaster.hlsl" />
      <None Include="Assets\My Pipeline\Shaders\Lit.shader" />

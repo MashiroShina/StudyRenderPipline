@@ -20,6 +20,7 @@ CBUFFER_START(UnityPerDraw)
 	float4 unity_SpecCube0_ProbePosition, unity_SpecCube0_HDR;
 	float4 unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax;
 	float4 unity_SpecCube1_ProbePosition, unity_SpecCube1_HDR;
+	float4 unity_LightmapST;
 CBUFFER_END
 
 //Light Buffer======================================================================================================================================================
@@ -94,7 +95,7 @@ float3 SampleEnvironment (LitSurface s) {
 		sample = SAMPLE_TEXTURECUBE_LOD(
 			unity_SpecCube1, samplerunity_SpecCube0, uvw, mip
 		);
-		color = lerp(sample.rgb, DecodeHDREnvironment(sample, unity_SpecCube1_HDR), blend);
+		color = lerp(DecodeHDREnvironment(sample, unity_SpecCube1_HDR), color, blend);
 	}
 	return color;
 }
@@ -129,6 +130,10 @@ SAMPLER_CMP(sampler_CascadedShadowMap);
 
 TEXTURE2D(_MainTex);
 SAMPLER(sampler_MainTex);
+
+//lightMap
+TEXTURE2D(unity_Lightmap);
+SAMPLER(samplerunity_Lightmap);
 
 //判断是否在剔除球里
 float InsideCascadeCullingSphere (int index, float3 worldPos) {
@@ -284,6 +289,7 @@ struct VertexInput {
 	float4 pos : POSITION;
 	float3 normal : NORMAL;
 	float2 uv : TEXCOORD0;
+	float2 lightmapUV : TEXCOORD1;
 	UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -293,8 +299,17 @@ struct VertexOutput {
 	float3 worldPos : TEXCOORD1;
 	float3 vertexLighting : TEXCOORD2;
 	float2 uv : TEXCOORD3;
+	#if defined(LIGHTMAP_ON)
+		float2 lightmapUV : TEXCOORD4;
+	#endif
 	UNITY_VERTEX_INPUT_INSTANCE_ID
 };
+
+float3 SampleLightmap (float2 uv) {
+	return SampleSingleLightmap(
+		TEXTURE2D_PARAM(unity_Lightmap, samplerunity_Lightmap), uv
+	);
+}
 
 VertexOutput LitPassVertex (VertexInput input) {
 	VertexOutput output;
@@ -319,7 +334,10 @@ VertexOutput LitPassVertex (VertexInput input) {
 		//output.vertexLighting += DiffuseLight(lightIndex, output.normal, output.worldPos,1);//顶点光源不会有阴影，所以在LitPassVertex.中将阴影衰减设为1
 		output.vertexLighting += GenericLight(lightIndex, surface, 1);
 	}
-	
+	#if defined(LIGHTMAP_ON)
+		output.lightmapUV =
+			input.lightmapUV * unity_LightmapST.xy + unity_LightmapST.zw;
+	#endif
 	return output;
 }
 

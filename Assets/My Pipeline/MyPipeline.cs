@@ -182,7 +182,8 @@ public class MyPipeline : RenderPipeline
 			drawSettings.rendererConfiguration = RendererConfiguration.PerObjectLightIndices8;
 		}           
 		drawSettings.rendererConfiguration |=
-			RendererConfiguration.PerObjectReflectionProbes;
+			RendererConfiguration.PerObjectReflectionProbes|
+			RendererConfiguration.PerObjectLightmaps;
 		//drawSettings.flags = drawFlags;//设置动态批处理和GPUinstance
 		drawSettings.sorting.flags = SortFlags.CommonOpaque;//设置渲染顺序
 
@@ -397,6 +398,9 @@ public class MyPipeline : RenderPipeline
 		float tileSize = shadowMapSize / 2;
 		cascadedShadowMap = SetShadowRenderTarget();
 		shadowBuffer.BeginSample("Render Shadows");
+		shadowBuffer.SetGlobalVector(
+			globalShadowDataId, new Vector4(0f, shadowDistance * shadowDistance)
+		);
 		context.ExecuteCommandBuffer(shadowBuffer);
 		shadowBuffer.Clear();
 		Light shadowLight = cull.visibleLights[0].light;
