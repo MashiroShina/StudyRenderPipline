@@ -307,8 +307,22 @@ struct VertexOutput {
 
 float3 SampleLightmap (float2 uv) {
 	return SampleSingleLightmap(
-		TEXTURE2D_PARAM(unity_Lightmap, samplerunity_Lightmap), uv
+		TEXTURE2D_PARAM(unity_Lightmap, samplerunity_Lightmap), uv,
+		float4(1, 1, 0, 0),
+		#if defined(UNITY_LIGHTMAP_FULL_HDR)
+			false,
+		#else
+			true,
+		#endif
+		float4(LIGHTMAP_HDR_MULTIPLIER, LIGHTMAP_HDR_EXPONENT, 0.0, 0.0)
 	);
+}
+
+float3 GlobalIllumination (VertexOutput input) {
+	#if defined(LIGHTMAP_ON)
+		return SampleLightmap(input.lightmapUV);
+	#endif
+	return 0;
 }
 
 VertexOutput LitPassVertex (VertexInput input) {
@@ -384,6 +398,7 @@ float4 LitPassFragment (VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_
 	//}
 	//float3 color = diffuseLight*albedoAlpha.rgb;
 	color += ReflectEnvironment(surface, SampleEnvironment(surface));
+	color = GlobalIllumination(input);
 	return float4(color, albedoAlpha.a);
 }
 
