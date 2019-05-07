@@ -64,6 +64,7 @@
      <None Include="Assets\My Pipeline\ShaderLibrary\Unlit.hlsl" />
      <None Include="Assets\My Pipeline\ShaderLibrary\ShadowCaster.hlsl" />
      <None Include="Assets\My Pipeline\Shaders\Lit.shader" />
+     <None Include="Assets\My Pipeline\ShaderLibrary\Meta.hlsl" />
      <None Include="Assets\My Pipeline\Shaders\Unlit.shader" />
  <Reference Include="Unity.RenderPipelines.Core.Editor">
  <HintPath>/Users/shinamashiro/Desktop/StudyRenderPipline/Library/ScriptAssemblies/Unity.RenderPipelines.Core.Editor.dll</HintPath>

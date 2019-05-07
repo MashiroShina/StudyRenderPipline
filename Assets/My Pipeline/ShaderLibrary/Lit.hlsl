@@ -283,6 +283,7 @@ UNITY_INSTANCING_BUFFER_START(PerInstance)      //CBUFFER_START(UnityPerMaterial
 	UNITY_DEFINE_INSTANCED_PROP(float4, _Color) //float4 _Color;
 	UNITY_DEFINE_INSTANCED_PROP(float, _Metallic)
 	UNITY_DEFINE_INSTANCED_PROP(float, _Smoothness)
+	UNITY_DEFINE_INSTANCED_PROP(float4, _EmissionColor)
 UNITY_INSTANCING_BUFFER_END(PerInstance)        //CBUFFER_END
 
 struct VertexInput {
@@ -398,7 +399,8 @@ float4 LitPassFragment (VertexOutput input, FRONT_FACE_TYPE isFrontFace : FRONT_
 	//}
 	//float3 color = diffuseLight*albedoAlpha.rgb;
 	color += ReflectEnvironment(surface, SampleEnvironment(surface));
-	color = GlobalIllumination(input);
+	color += GlobalIllumination(input) * surface.diffuse;
+	color += UNITY_ACCESS_INSTANCED_PROP(PerInstance, _EmissionColor).rgb;
 	return float4(color, albedoAlpha.a);
 }
 

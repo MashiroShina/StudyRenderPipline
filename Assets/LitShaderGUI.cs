@@ -84,7 +84,15 @@ public class LitShaderGUI : ShaderGUI
 		this.properties = properties;
 
 		CastShadowsToggle();
-
+		EditorGUI.BeginChangeCheck();
+		editor.LightmapEmissionProperty();
+		if (EditorGUI.EndChangeCheck()) {
+			foreach (Material m in editor.targets) {
+				m.globalIlluminationFlags &=
+					~MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+			}
+		}
+		
 		EditorGUILayout.Space();
 		showPresets = EditorGUILayout.Foldout(showPresets, "Presets", true);
 		if (showPresets) {

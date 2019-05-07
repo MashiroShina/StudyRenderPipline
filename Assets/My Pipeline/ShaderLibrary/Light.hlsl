@@ -71,3 +71,6 @@ void PremultiplyAlpha (inout LitSurface s, inout float alpha) {
 	s.diffuse *= alpha;
 	alpha = lerp(alpha, 1, s.reflectivity);
 }
+LitSurface GetLitSurfaceMeta (float3 color, float metallic, float smoothness) {
+	return GetLitSurface(0, 0, 0, color, metallic, smoothness);
+}

@@ -6,6 +6,7 @@
 		_Cutoff ("Alpha Cutoff", Range(0, 1)) = 0.5
 		_Metallic ("Metallic", Range(0, 1)) = 0
 		_Smoothness ("Smoothness", Range(0, 1)) = 0.5
+		[HDR] _EmissionColor ("Emission Color", Color) = (0, 0, 0, 0)
 		
 		//[Toggle(_CLIPPING)] _Clipping ("Alpha Clipping", Float) = 0
 		[KeywordEnum(Off, On, Shadows)] _Clipping ("Alpha Clipping", Float) = 0
@@ -70,6 +71,22 @@
 			#pragma fragment ShadowCasterPassFragment
 			
 			#include "../ShaderLibrary/ShadowCaster.hlsl"
+			
+			ENDHLSL
+		}
+		Pass {
+			Tags {
+				"LightMode" = "Meta"
+			}
+			
+			Cull Off
+			
+			HLSLPROGRAM
+			
+			#pragma vertex MetaPassVertex
+			#pragma fragment MetaPassFragment
+			
+			#include "../ShaderLibrary/Meta.hlsl"
 			
 			ENDHLSL
 		}
