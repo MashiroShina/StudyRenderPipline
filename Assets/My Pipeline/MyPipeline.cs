@@ -58,6 +58,13 @@ public class MyPipeline : RenderPipeline
 	Matrix4x4[] worldToShadowCascadeMatrices = new Matrix4x4[5];
 	Vector4[] cascadeCullingSpheres = new Vector4[4];//xyz分量描述球的位置。w分量定义球的半径。
 	Vector4[] visibleLightOcclusionMasks = new Vector4[maxVisibleLights];
+	static Vector4[] occlusionMasks = {
+		new Vector4(-1f, 0f, 0f, 0f),
+		new Vector4(1f, 0f, 0f, 0f),
+		new Vector4(0f, 1f, 0f, 0f),
+		new Vector4(0f, 0f, 1f, 0f),
+		new Vector4(0f, 0f, 0f, 1f)
+	};
 	//====================================================================================================================
 	
 	DrawRendererFlags drawFlags;//设置渲染处理方式
