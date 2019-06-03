@@ -12,9 +12,9 @@
           <e p="MyPipelineAsset.cs" t="Include" />
           <e p="MyPipelineAssetEditor.cs" t="Include" />
           <e p="ShaderLibrary" t="Include">
-            <e p="Cust.hlsl" t="Include" />
             <e p="Light.hlsl" t="Include" />
             <e p="Lit.hlsl" t="Include" />
+            <e p="Meta.hlsl" t="Include" />
             <e p="ShadowCaster.hlsl" t="Include" />
             <e p="Unlit.hlsl" t="Include" />
           </e>

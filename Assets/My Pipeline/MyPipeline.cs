@@ -44,6 +44,7 @@ public class MyPipeline : RenderPipeline
 	static int cascadedShadowMapSizeId = Shader.PropertyToID("_CascadedShadowMapSize");
 	static int cascadedShadoStrengthId = Shader.PropertyToID("_CascadedShadowStrength");
 	static int cascadeCullingSpheresId = Shader.PropertyToID("_CascadeCullingSpheres");
+	static int visibleLightOcclusionMasksId = Shader.PropertyToID("_VisibleLightOcclusionMasks");
 	
 	const string shadowsSoftKeyword = "_SHADOWS_SOFT";
 	const string shadowsHardKeyword = "_SHADOWS_HARD";
@@ -56,6 +57,7 @@ public class MyPipeline : RenderPipeline
 	Matrix4x4[] worldToShadowMatrices = new Matrix4x4[maxVisibleLights];
 	Matrix4x4[] worldToShadowCascadeMatrices = new Matrix4x4[5];
 	Vector4[] cascadeCullingSpheres = new Vector4[4];//xyz分量描述球的位置。w分量定义球的半径。
+	Vector4[] visibleLightOcclusionMasks = new Vector4[maxVisibleLights];
 	//====================================================================================================================
 	
 	DrawRendererFlags drawFlags;//设置渲染处理方式
